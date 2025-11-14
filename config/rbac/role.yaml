@@ -1,11 +1,32 @@
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  labels:
-    app.kubernetes.io/name: scalingo-operator
-    app.kubernetes.io/managed-by: kustomize
   name: manager-role
 rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - databases.scalingo.com
+  resources:
+  - postgresqls
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - databases.scalingo.com
+  resources:
+  - postgresqls/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - databases.scalingo.com
+  resources:
+  - postgresqls/status
+  verbs:
+  - get
+  - patch
+  - update

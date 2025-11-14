@@ -39,6 +39,9 @@ chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/
 ### Operator creation example
 ```sh
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
+kubebuilder create api --group databases --version v1alpha1 --kind PostgreSQL
+make manifests
+make install
 ```
 
 ### Build commands
