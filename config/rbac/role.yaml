@@ -7,6 +7,7 @@ rules:
 - apiGroups:
   - databases.scalingo.com
   resources:
+  - opensearches
   - postgresqls
   verbs:
   - create
@@ -19,12 +20,14 @@ rules:
 - apiGroups:
   - databases.scalingo.com
   resources:
+  - opensearches/finalizers
   - postgresqls/finalizers
   verbs:
   - update
 - apiGroups:
   - databases.scalingo.com
   resources:
+  - opensearches/status
   - postgresqls/status
   verbs:
   - get

@@ -18,4 +18,13 @@ resources:
   kind: PostgreSQL
   path: github.com/Scalingo/scalingo-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: scalingo.com
+  group: databases
+  kind: OpenSearch
+  path: github.com/Scalingo/scalingo-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

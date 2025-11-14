@@ -22,6 +22,9 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the scalingo-operator itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
+- opensearch_admin_role.yaml
+- opensearch_editor_role.yaml
+- opensearch_viewer_role.yaml
 - postgresql_admin_role.yaml
 - postgresql_editor_role.yaml
 - postgresql_viewer_role.yaml
