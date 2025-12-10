@@ -1,16 +1,18 @@
-# scalingo-operator
+# Scalingo Operator
 
 Scalingo operator for Kubernetes.
 
 
 # Usage
 
+TODO: to complete
 
+TODO: explain CRD
 
 
 # Development
 
-## Install environment
+## Install Environment
 
 ```sh
 sudo snap install microk8s --classic
@@ -28,7 +30,7 @@ microk8s.kubectl config view
 kubectl config view
 ```
 
-## download kubebuilder and install locally.
+## Download Kubebuilder and Install Locally
 ```sh
 curl -L -o kubebuilder "https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)"
 chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/
@@ -36,7 +38,7 @@ chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/
 
 ## Kubebuilder Commands
 
-### Operator creation example
+### Operator Creation Example
 ```sh
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
 kubebuilder create api --group databases --version v1alpha1 --kind PostgreSQL
@@ -46,7 +48,7 @@ make generate
 make install
 ```
 
-### Build commands
+### Build Commands
 
 ```sh
 # generate api/v1alpha/zz_generated.deepcopy.go
@@ -59,7 +61,7 @@ make manifests
 make run
 ```
 
-### Deployment commands
+### Deployment Commands
 
 ```sh
 # deploy the CRD in the cluster
