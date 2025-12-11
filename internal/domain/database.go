@@ -1,11 +1,5 @@
 package domain
 
-const (
-	// Databases finalizers names.
-	OpenSearchFinalizerName = "databases.scalingo.com/OpenSearchFinalizer"
-	PostgreSQLFinalizerName = "databases.scalingo.com/PostgresFinalizer"
-)
-
 type Database struct {
 	ID        string
 	Name      string

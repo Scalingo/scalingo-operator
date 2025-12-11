@@ -66,9 +66,9 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Add finalizer.
-	if !controllerutil.ContainsFinalizer(&postgresql, domain.PostgreSQLFinalizerName) {
+	if !controllerutil.ContainsFinalizer(&postgresql, helpers.PostgreSQLFinalizerName) {
 		log.Info("Add finalizer to resource")
-		controllerutil.AddFinalizer(&postgresql, domain.PostgreSQLFinalizerName)
+		controllerutil.AddFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
 		if err := r.Update(ctx, &postgresql); err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "add finalizer")
 		}
