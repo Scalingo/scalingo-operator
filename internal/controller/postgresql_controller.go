@@ -135,7 +135,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if currentDB.Status == domain.AddonStatusRunning {
 			log.Info("Database is provisionned")
 			helpers.SetDatabaseStatusProvisionned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
-			if err = r.Status().Update(ctx, &postgresql); err != nil {
+			if err = r.Update(ctx, &postgresql); err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s status", currentDB.ID)
 			}
 
@@ -144,11 +144,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.Info("Waiting for database being provisionned")
 			requeue = true
 		}
-	}
-
-	err = r.Update(ctx, &postgresql)
-	if err != nil {
-		return ctrl.Result{}, errors.Wrap(ctx, err, "update state")
 	}
 
 	if requeue {

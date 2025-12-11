@@ -5,6 +5,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Databases status annotation.
+const DatabaseAnnotationIsRunning = "databases.scalingo.com/db-is-running"
+
 // Helper functions to read and modify operator status through its
 // Meta data: annotations and statuts conditions.
 
@@ -63,9 +66,9 @@ func SetDatabaseStatusProvisionned(dbMeta *metav1.ObjectMeta, conditions *[]meta
 		Reason:  reasonProvisionned,
 		Message: msgProvisionned,
 	})
-
 }
 
+// Private constants.
 const (
 	reasonNotAvailable    = "DatabaseNotAvailable"
 	reasonAvailable       = "DatabaseAvailable"

@@ -7,9 +7,6 @@ type DatabaseStatusCondition string
 const (
 	DatabaseStatusConditionAvailable    DatabaseStatusCondition = "Available"
 	DatabaseStatusConditionProvisioning DatabaseStatusCondition = "Provisioning"
-
-	// Databases status annotations.
-	DatabaseAnnotationIsRunning = "databases.scalingo.com/db-is-running"
 )
 
 func (c DatabaseStatusCondition) Validate() error {
