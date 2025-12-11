@@ -2,12 +2,31 @@
 
 Scalingo operator for Kubernetes.
 
+# Definitions
+
+Few helpful definitions to start with.
+
+## CRD (Custom Resource Definition)
+
+A CRD is a Kubernetes object used to define a new custom resource type in the Kubernetes API.
+It tells the API server: “Here is a new kind (e.g., MyApp) and its schema.”
+
+Example:
+`config/crd/bases/databases.scalingo.com_postgresqls.yaml`
+
+## CR (Custom Resource)
+
+A CR is an actual instance of the type defined by the CRD.
+
+Example:
+`config/samples/databases_v1alpha1_postgresql.yaml`
 
 # Usage
 
-TODO: to complete
+As a pre-requisite, first store your Scalingo API token in your cluster secrets.
+Then, execute the Kubernetes operator on your cluster.
 
-## Create secret
+## Create Secret
 
 ```sh
 # create secret
@@ -19,16 +38,19 @@ kubectl create secret generic scalingo \
 kubectl describe secret scalingo
 ```
 
-## Apply
+## Deploy Database
 
-kubectl apply -k config/samples
-
-or
-
+Using PostgreSQL sample example:
+```sh
 kubectl apply -f config/samples/databases_v1alpha1_postgresql.yaml
+```
 
-TODO: to complete
+## Undeploy Database
 
+Using PostgreSQL sample example:
+```sh
+kubectl delete -f config/samples/databases_v1alpha1_postgresql.yaml
+```
 
 # Architecture
 
@@ -68,11 +90,8 @@ microk8s.kubectl config view
 kubectl config view
 ```
 
-<<<<<<< HEAD
 ## Download Kubebuilder and Install Locally
-=======
-## download kubebuilder and install locally
->>>>>>> c61f6f0 (doc: explain architecture in use)
+
 ```sh
 curl -L -o kubebuilder "https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)"
 chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/
@@ -98,9 +117,12 @@ make generate
 
 # generate the CRD manifests under config/crd/bases and a sample for it under config/samples
 make manifests
+
+# note: they can be combined
+make generate manifests
 ```
 
-### Execute command
+### Execute Command
 
 ```sh
 # deploy the CRD on local cluster
@@ -113,12 +135,7 @@ kubectl get crd
 make run
 ```
 
-<<<<<<< HEAD
-### Deployment Commands
-
-=======
-### Build and deploy image
->>>>>>> c61f6f0 (doc: explain architecture in use)
+### Build and Deploy Image
 ```sh
 export VERSION="1.0.0-alpha1"
 
@@ -129,7 +146,34 @@ make docker-build docker-push IMG=scalingo/scalingo-operator:v$VERSION
 make deploy IMG=scalingo/scalingo-operator:v$VERSION
 ```
 
-# Useful links
+## Tips and Tricks
+
+### Force delete the CRD
+
+The kubernetes delete CRD hangs indefinetly, example:
+```sh
+kubectl delete crd postgresqls.databases.scalingo.com
+```
+
+To force the deletion, remove the Finalizers manually:
+```sh
+# example
+$KIND=PostgreSQL
+$NAME=postgresql-sample
+$CRD=postgresqls.databases.scalingo.com
+
+# edit the current CRD descriptor, and remove this block:
+#
+#   metadata:
+#       finalizers: []
+#
+kubectl edit $KIND $NAME
+
+# then, retry the delete
+kubectl delete crd $CRD
+```
+
+# Useful Links
 
 * [Kubebuilder book](https://book.kubebuilder.io/)
 * [MicroK8s](https://microk8s.io/)
