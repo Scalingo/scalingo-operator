@@ -51,6 +51,9 @@ func (r *OpenSearchReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// TODO(user): your logic here
 
+	// This controller does nothing.
+	// It is kept by now as example to help define the incoming multi-database architecture.
+
 	return ctrl.Result{}, nil
 }
 

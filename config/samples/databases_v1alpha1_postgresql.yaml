@@ -6,4 +6,15 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: postgresql-sample
 spec:
-  # TODO(user): Add fields here
+  authSecret:
+    name: scalingo
+    key: api_token
+  connInfoSecretTarget:
+    name: myPostgreSQLSecret
+    prefix: PG
+    namespace: my-kubernetes-namespace
+
+  name: my-staging-db-name
+  plan: postgresql-ng-starter-1024 
+  region: osc-st-fr1
+  projectID: prj-da48cd16-6876-4200-91e1-ca7234d8bf44
