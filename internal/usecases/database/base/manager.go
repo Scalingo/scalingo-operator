@@ -5,15 +5,15 @@ import (
 
 	errors "github.com/Scalingo/go-utils/errors/v2"
 
-	goscalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/go-scalingo"
-	goscalingobase "github.com/Scalingo/scalingo-operator/internal/boundaries/out/go-scalingo/base"
+	scalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
+	scalingobase "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo/base"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 	"github.com/Scalingo/scalingo-operator/internal/usecases/database"
 )
 
 type manager struct {
 	dbType   domain.DatabaseType
-	scClient goscalingo.Client
+	scClient scalingo.Client
 }
 
 func NewManager(ctx context.Context, dbType domain.DatabaseType, apiToken, region string) (database.Manager, error) {
@@ -25,9 +25,9 @@ func NewManager(ctx context.Context, dbType domain.DatabaseType, apiToken, regio
 		return nil, errors.New(ctx, "empty apitoken")
 	}
 
-	scClient, err := goscalingobase.NewClient(ctx, apiToken, region)
+	scClient, err := scalingobase.NewClient(ctx, apiToken, region)
 	if err != nil {
-		return nil, errors.Wrap(ctx, err, "new goscalingo client")
+		return nil, errors.Wrap(ctx, err, "new scalingo client")
 	}
 
 	return &manager{

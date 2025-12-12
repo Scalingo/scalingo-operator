@@ -1,13 +1,13 @@
-package goscalingo
+package scalingo
 
 import (
 	"context"
 	"fmt"
 
-	scalingo "github.com/Scalingo/go-scalingo/v8"
+	scalingoapi "github.com/Scalingo/go-scalingo/v8"
 	errors "github.com/Scalingo/go-utils/errors/v2"
 
-	goscalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/go-scalingo"
+	scalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
@@ -19,15 +19,15 @@ const (
 )
 
 type client struct {
-	scClient *scalingo.Client
+	scClient *scalingoapi.Client
 }
 
-func NewClient(ctx context.Context, apiToken, region string) (goscalingo.Client, error) {
+func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, error) {
 	if apiToken == "" {
 		return nil, errors.New(ctx, "empty token")
 	}
 
-	cfg := scalingo.ClientConfig{
+	cfg := scalingoapi.ClientConfig{
 		APIToken: apiToken,
 		Region:   region,
 	}
@@ -37,7 +37,7 @@ func NewClient(ctx context.Context, apiToken, region string) (goscalingo.Client,
 		cfg.AuthEndpoint = stagingAuthURL
 	}
 
-	scClient, err := scalingo.New(ctx, cfg)
+	scClient, err := scalingoapi.New(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain
 		return domain.Database{}, errors.Wrap(ctx, err, "create database")
 	}
 
-	dbNG, err := c.scClient.Preview().DatabaseCreate(ctx, scalingo.DatabaseCreateParams{
+	dbNG, err := c.scClient.Preview().DatabaseCreate(ctx, scalingoapi.DatabaseCreateParams{
 		AddonProviderID: addonProviderID,
 		PlanID:          db.Plan,
 		Name:            db.Name,
@@ -83,10 +83,6 @@ func (c *client) DeleteDatabase(ctx context.Context, dbID string) error {
 	return domain.ErrNotImplemented
 }
 
-func (c *client) getConnectionURL(ctx context.Context, db domain.Database) (string, error) {
-	return "", domain.ErrNotImplemented
-}
-
 func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
 	switch dbType {
 	case domain.DatabaseTypePostgreSQL:
@@ -96,17 +92,17 @@ func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
 	}
 }
 
-func toAddonStatus(status scalingo.AddonStatus) domain.AddonStatus {
+func toAddonStatus(status scalingoapi.AddonStatus) domain.AddonStatus {
 	switch status {
-	case scalingo.AddonStatusProvisioning:
+	case scalingoapi.AddonStatusProvisioning:
 		return domain.AddonStatusProvisioning
-	case scalingo.AddonStatusRunning:
+	case scalingoapi.AddonStatusRunning:
 		return domain.AddonStatusRunning
 	default:
 		return domain.AddonStatusSuspended
 	}
 }
-func toDatabase(db scalingo.DatabaseNG) domain.Database {
+func toDatabase(db scalingoapi.DatabaseNG) domain.Database {
 	return domain.Database{
 		ID:        db.App.ID,
 		Name:      db.App.Name,
