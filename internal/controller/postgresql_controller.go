@@ -96,6 +96,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	expectedDB := adapters.PostgreSQLToDatabase(postgresql)
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
+	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
 	IsDatabaseProvisionned := helpers.IsDatabaseProvisionned(postgresql.Status.Conditions)
 	requeue := false
@@ -103,16 +104,31 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log.Info("Current state",
 		"database", postgresql.Status.ScalingoDatabaseID,
 		"running", isDatabaseRunning,
+		"delete", isDatabaseDeletionRequested,
 		"available", isDatabaseAvailable,
 		"provisionned", IsDatabaseProvisionned)
 
-	if !isDatabaseRunning && postgresql.Status.ScalingoDatabaseID == "" {
+	if isDatabaseDeletionRequested {
+		// Delete database.
+		log.Info("Delete database")
+
+		err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "delete database")
+		}
+
+		controllerutil.RemoveFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
+		err = r.Update(ctx, &postgresql)
+		if err != nil {
+			return ctrl.Result{}, errors.Wrapf(ctx, err, "remove finalizer %s", helpers.PostgreSQLFinalizerName)
+		}
+	} else if !isDatabaseRunning && postgresql.Status.ScalingoDatabaseID == "" {
 		// Create database.
-		log.Info("Create new database")
+		log.Info("Create database")
 
 		newDB, err := dbManager.CreateDatabase(ctx, expectedDB)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "create new database")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "create database")
 		}
 
 		postgresql.Status.ScalingoDatabaseID = newDB.ID

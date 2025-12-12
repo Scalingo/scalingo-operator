@@ -45,7 +45,11 @@ func (c *client) UpdateDatabase(ctx context.Context, db domain.Database) (domain
 }
 
 func (c *client) DeleteDatabase(ctx context.Context, dbID string) error {
-	return domain.ErrNotImplemented
+	err := c.scClient.Preview().DatabaseDestroy(ctx, dbID)
+	if err != nil {
+		return errors.Wrap(ctx, err, "delete database")
+	}
+	return nil
 }
 
 func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
