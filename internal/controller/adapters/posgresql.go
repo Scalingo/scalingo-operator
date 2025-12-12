@@ -1,4 +1,4 @@
-package mappers
+package adapters
 
 import (
 	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"

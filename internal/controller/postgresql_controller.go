@@ -29,8 +29,8 @@ import (
 
 	"github.com/Scalingo/go-utils/errors/v2"
 	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
+	"github.com/Scalingo/scalingo-operator/internal/controller/adapters"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
-	"github.com/Scalingo/scalingo-operator/internal/controller/mappers"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 	databasebase "github.com/Scalingo/scalingo-operator/internal/usecases/database/base"
 )
@@ -98,7 +98,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Create, modify, delete database.
-	expectedDB := mappers.PostgresToDatabase(postgresql)
+	expectedDB := adapters.PostgresToDatabase(postgresql)
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
 	IsDatabaseProvisionned := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
