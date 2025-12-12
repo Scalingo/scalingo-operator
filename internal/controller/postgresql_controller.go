@@ -67,10 +67,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Add finalizer.
 	if !controllerutil.ContainsFinalizer(&postgresql, helpers.PostgreSQLFinalizerName) {
-		log.Info("Add finalizer to resource")
+		log.Info("Add finalizer to resource", "finalizer", helpers.PostgreSQLFinalizerName)
 		controllerutil.AddFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
 		if err := r.Update(ctx, &postgresql); err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "add finalizer")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "add PostgreSQL finalizer")
 		}
 	}
 
@@ -98,7 +98,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Create, modify, delete database.
-	expectedDB := adapters.PostgresToDatabase(postgresql)
+	expectedDB := adapters.PostgreSQLToDatabase(postgresql)
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
 	IsDatabaseProvisionned := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)

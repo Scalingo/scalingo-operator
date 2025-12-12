@@ -6,7 +6,7 @@ import (
 )
 
 // Convert from Kubebuilder type to internal type.
-func PostgresToDatabase(postgresql databasesv1alpha1.PostgreSQL) domain.Database {
+func PostgreSQLToDatabase(postgresql databasesv1alpha1.PostgreSQL) domain.Database {
 	return domain.Database{
 		Name:      postgresql.Spec.Name,
 		Type:      domain.DatabaseTypePostgreSQL,
