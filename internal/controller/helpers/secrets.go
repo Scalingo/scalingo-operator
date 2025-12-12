@@ -6,7 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/Scalingo/go-utils/errors/v2"
+	"github.com/Scalingo/go-utils/errors/v3"
 )
 
 func GetSecret(ctx context.Context, reader client.Reader, namespace, name, key string) (string, error) {

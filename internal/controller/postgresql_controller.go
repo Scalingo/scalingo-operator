@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/Scalingo/go-utils/errors/v2"
+	"github.com/Scalingo/go-utils/errors/v3"
 	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
 	"github.com/Scalingo/scalingo-operator/internal/controller/adapters"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"

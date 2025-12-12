@@ -6,21 +6,19 @@ toolchain go1.24.5
 
 require (
 	github.com/Scalingo/go-scalingo/v8 v8.7.0
-	github.com/Scalingo/go-utils/errors/v2 v2.5.1
+	github.com/Scalingo/go-utils/errors/v3 v3.1.1
+	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.36.1
+	golang.org/x/net v0.41.0
+	k8s.io/api v0.34.0
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 	sigs.k8s.io/controller-runtime v0.22.1
 )
 
 require (
-	github.com/onsi/ginkgo/v2 v2.22.0
-	golang.org/x/net v0.41.0
-	k8s.io/api v0.34.0
-)
-
-require (
 	cel.dev/expr v0.24.0 // indirect
+	github.com/Scalingo/go-utils/errors/v2 v2.5.1 // indirect
 	github.com/Scalingo/go-utils/pagination v1.1.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
