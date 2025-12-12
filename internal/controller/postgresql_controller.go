@@ -69,7 +69,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if !controllerutil.ContainsFinalizer(&postgresql, helpers.PostgreSQLFinalizerName) {
 		log.Info("Add finalizer to resource", "finalizer", helpers.PostgreSQLFinalizerName)
 		controllerutil.AddFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
-		if err := r.Update(ctx, &postgresql); err != nil {
+		err := r.Update(ctx, &postgresql)
+		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "add PostgreSQL finalizer")
 		}
 	}
@@ -79,7 +80,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		log.Info("Initialize status conditions and annotations")
 
 		helpers.SetDatabaseInitialState(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
-		if err := r.Update(ctx, &postgresql); err != nil {
+		err := r.Update(ctx, &postgresql)
+		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "set intial state")
 		}
 	}
@@ -121,7 +123,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
 		helpers.SetDatabaseStatusProvisionning(&postgresql.Status.Conditions)
-		if err = r.Status().Update(ctx, &postgresql); err != nil {
+		err = r.Status().Update(ctx, &postgresql)
+		if err != nil {
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s status", newDB.ID)
 		}
 		requeue = true
@@ -135,7 +138,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if currentDB.Status == domain.AddonStatusRunning {
 			log.Info("Database is provisionned")
 			helpers.SetDatabaseStatusProvisionned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
-			if err = r.Update(ctx, &postgresql); err != nil {
+			err = r.Update(ctx, &postgresql)
+			if err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s status", currentDB.ID)
 			}
 
