@@ -1,4 +1,4 @@
-package goscalingo
+package scalingo
 
 import (
 	"context"
