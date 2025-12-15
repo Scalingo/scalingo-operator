@@ -14,6 +14,6 @@ func (c DatabaseStatusCondition) Validate() error {
 	case DatabaseStatusConditionAvailable, DatabaseStatusConditionProvisioning:
 		return nil
 	default:
-		return fmt.Errorf("invalid database condition: %s", c)
+		return fmt.Errorf("invalid database status condition: %s", c)
 	}
 }

@@ -42,7 +42,7 @@ type PostgreSQLSpec struct {
 	Name string `json:"name"`
 
 	// Plan is the plan to use for the PostgreSQL database.
-	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MinLength=10
 	// +kubebuilder:validation:Required
 	Plan string `json:"plan"`
 

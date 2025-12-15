@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -95,7 +94,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, errors.Wrap(ctx, err, "create database manager")
 	}
 
-	// Create, modify, delete database.
 	expectedDB := adapters.PostgreSQLToDatabase(postgresql)
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
@@ -147,9 +145,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if requeue {
-		delay := 30 * time.Second
-		log.Info("Requeue after delay", "delay", delay)
-		return ctrl.Result{RequeueAfter: delay}, nil
+		log.Info("Requeue after delay", "delay", helpers.RequeueDelay)
+		return ctrl.Result{RequeueAfter: helpers.RequeueDelay}, nil
 	}
 	return ctrl.Result{}, nil
 }
