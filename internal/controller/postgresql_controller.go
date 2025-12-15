@@ -106,7 +106,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log.Info("Current state",
 		"database", postgresql.Status.ScalingoDatabaseID,
 		"running", isDatabaseRunning,
-		"delete", isDatabaseDeletionRequested,
+		"deletion_requested", isDatabaseDeletionRequested,
 		"available", isDatabaseAvailable,
 		"provisionned", IsDatabaseProvisionned)
 
