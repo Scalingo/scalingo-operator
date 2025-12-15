@@ -4,7 +4,7 @@ type Database struct {
 	ID        string
 	Name      string
 	Type      DatabaseType
-	Status    AddonStatus
+	Status    DatabaseStatus
 	Plan      string
 	ProjectID string
 }

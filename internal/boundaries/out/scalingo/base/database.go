@@ -57,14 +57,15 @@ func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
 	}
 }
 
-func toAddonStatus(status scalingoapi.AddonStatus) domain.AddonStatus {
+func toDatabaseStatus(status scalingoapi.DatabaseStatus) domain.DatabaseStatus {
 	switch status {
-	case scalingoapi.AddonStatusProvisioning:
-		return domain.AddonStatusProvisioning
-	case scalingoapi.AddonStatusRunning:
-		return domain.AddonStatusRunning
+	case scalingoapi.DatabaseStatusCreating, scalingoapi.DatabaseStatusUpdating,
+		scalingoapi.DatabaseStatusMigrating, scalingoapi.DatabaseStatusUpgrading:
+		return domain.DatabaseStatusProvisioning
+	case scalingoapi.DatabaseStatusRunning:
+		return domain.DatabaseStatusRunning
 	default:
-		return domain.AddonStatusSuspended
+		return domain.DatabaseStatusSuspended
 	}
 }
 func toDatabase(db scalingoapi.DatabaseNG) domain.Database {
@@ -72,7 +73,7 @@ func toDatabase(db scalingoapi.DatabaseNG) domain.Database {
 		ID:        db.App.ID,
 		Name:      db.App.Name,
 		Type:      domain.DatabaseType(db.Database.TypeName),
-		Status:    toAddonStatus(db.Addon.Status),
+		Status:    toDatabaseStatus(db.Database.Status),
 		Plan:      db.Database.Plan,
 		ProjectID: db.App.Project.ID,
 	}

@@ -85,7 +85,7 @@ spec:
                 type: string
               plan:
                 description: Plan is the plan to use for the PostgreSQL database.
-                minLength: 1
+                minLength: 10
                 type: string
               projectID:
                 description: |-
