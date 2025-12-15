@@ -103,7 +103,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	expectedDB := adapters.PostgreSQLToDatabase(postgresql)
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
-	IsDatabaseProvisionned := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
+	IsDatabaseProvisionned := helpers.IsDatabaseProvisionned(postgresql.Status.Conditions)
 	requeue := false
 
 	log.Info("Current state",
