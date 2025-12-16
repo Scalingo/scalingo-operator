@@ -45,6 +45,29 @@ Using PostgreSQL sample example:
 kubectl apply -f config/samples/databases_v1alpha1_postgresql.yaml
 ```
 
+### Read Database URL
+
+At deployment, the database secret is written in Kubernetes secrets.
+The secret `name` and `key` are defined in Custom Resource `connInfoSecretTarget` fields.
+
+To read the secret:
+```sh
+$NAME=my-postgresql-secret  # read from CR spec.connInfoSecretTarget.name
+$PREFIX=PG                     # read from CR spec.connInfoSecretTarget.prefix
+
+# list all secrets in all namespaces
+kubectl get secrets -A
+
+# secret details
+kubectl describe secret $NAME
+
+# get secret field
+kubectl get secret $NAME -o jsonpath='{.data}' | grep $PREFIX
+
+# gather the returned base64 content and decode, example:
+echo "eG94b3hveG8=" | base64 --decode
+```
+
 ## Remove Database
 
 Using PostgreSQL sample example:
@@ -100,6 +123,9 @@ chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/
 ## Kubebuilder Commands
 
 ### Operator Creation Example
+
+These commands were executed to create this operator:
+
 ```sh
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
 kubebuilder create api --group databases --version v1alpha1 --kind PostgreSQL
@@ -150,12 +176,12 @@ make deploy IMG=scalingo/scalingo-operator:v$VERSION
 
 ### Force delete the CRD
 
-The kubernetes delete CRD hangs indefinetly, example:
+In case the kubernetes delete CRD hangs indefinetly, as with such command:
 ```sh
 kubectl delete crd postgresqls.databases.scalingo.com
 ```
 
-To force the deletion, remove the Finalizers manually:
+to force the deletion, remove the Finalizers manually:
 ```sh
 # example
 $KIND=PostgreSQL

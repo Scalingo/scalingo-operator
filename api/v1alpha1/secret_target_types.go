@@ -10,8 +10,4 @@ type SecretTargetSpec struct {
 	// Added as is without any transformation.
 	// By default, the prefix uses the following format: "SCALINGO_<DB_TYPE>_"
 	Prefix string `json:"prefix,omitempty"`
-
-	// Namespace where the secret will be created.
-	// If not specified, the secret will be created in the same namespace as the PostgreSQL resource.
-	Namespace string `json:"namespace,omitempty"`
 }

@@ -27,8 +27,7 @@ func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain
 	if err != nil {
 		return domain.Database{}, errors.Wrap(ctx, err, "create database")
 	}
-
-	return toDatabase(dbNG), nil
+	return toDatabase(ctx, dbNG)
 }
 
 func (c *client) GetDatabase(ctx context.Context, dbID string) (domain.Database, error) {
@@ -37,7 +36,7 @@ func (c *client) GetDatabase(ctx context.Context, dbID string) (domain.Database,
 		return domain.Database{}, errors.Wrap(ctx, err, "get database")
 	}
 
-	return toDatabase(dbNG), nil
+	return toDatabase(ctx, dbNG)
 }
 
 func (c *client) UpdateDatabase(ctx context.Context, db domain.Database) (domain.Database, error) {
@@ -72,13 +71,20 @@ func toDatabaseStatus(status scalingoapi.DatabaseStatus) domain.DatabaseStatus {
 		return domain.DatabaseStatusSuspended
 	}
 }
-func toDatabase(db scalingoapi.DatabaseNG) domain.Database {
+func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database, error) {
+	dbType := domain.DatabaseType(db.Database.TypeName)
+	err := dbType.Validate()
+	if err != nil {
+		return domain.Database{}, errors.Wrap(ctx, err, "to database")
+	}
+
 	return domain.Database{
-		ID:        db.App.ID,
+		ID:        db.Database.ID,
+		AppID:     db.App.ID,
 		Name:      db.App.Name,
-		Type:      domain.DatabaseType(db.Database.TypeName),
+		Type:      dbType,
 		Status:    toDatabaseStatus(db.Database.Status),
 		Plan:      db.Database.Plan,
 		ProjectID: db.App.Project.ID,
-	}
+	}, nil
 }

@@ -64,11 +64,6 @@ spec:
                       connection information.
                     minLength: 1
                     type: string
-                  namespace:
-                    description: |-
-                      Namespace where the secret will be created.
-                      If not specified, the secret will be created in the same namespace as the PostgreSQL resource.
-                    type: string
                   prefix:
                     description: |-
                       Prefix for the secret keys.
