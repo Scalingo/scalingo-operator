@@ -16,6 +16,10 @@ func IsDatabaseRunning(dbMeta metav1.ObjectMeta) bool {
 		dbMeta.Annotations[DatabaseAnnotationIsRunning] == annotationValueTrue
 }
 
+func IsDatabaseDeletionRequested(dbMeta metav1.ObjectMeta) bool {
+	return !dbMeta.DeletionTimestamp.IsZero()
+}
+
 func IsDatabaseAvailable(conditions []metav1.Condition) bool {
 	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionAvailable))
 }
