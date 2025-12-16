@@ -30,9 +30,29 @@ type PostgreSQLSpec struct {
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	// foo is an example field of PostgreSQL. Edit postgresql_types.go to remove/update
-	// +optional
-	Foo *string `json:"foo,omitempty"`
+	// Auth contains the references to the authentication details needed to connect to Scalingo.
+	// +kubebuilder:validation:Required
+	AuthSecret AuthSecretSpec `json:"authSecret"`
+
+	ConnInfoSecretTarget SecretTargetSpec `json:"connInfoSecretTarget"`
+
+	// Name is the name of the PostgreSQL database to create on Scalingo.
+	// +kubebuilder:validation:MinLength=5
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Plan is the plan to use for the PostgreSQL database.
+	// +kubebuilder:validation:MinLength=10
+	// +kubebuilder:validation:Required
+	Plan string `json:"plan"`
+
+	// Region is the Scalingo region where the PostgreSQL database will be created.
+	// +kubebuilder:default="osc-fr1"
+	Region string `json:"region"`
+
+	// ProjectID is the Scalingo project ID where the PostgreSQL database will be created.
+	// If not specified, the default project associated with the authentication token will be used.
+	ProjectID string `json:"projectID,omitempty"`
 }
 
 // PostgreSQLStatus defines the observed state of PostgreSQL.
@@ -56,6 +76,9 @@ type PostgreSQLStatus struct {
 	// +listMapKey=type
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// ScalingoDatabaseID is the unique identifier of the PostgreSQL database on Scalingo.
+	ScalingoDatabaseID string `json:"scalingoDatabaseID,omitempty"`
 }
 
 // +kubebuilder:object:root=true

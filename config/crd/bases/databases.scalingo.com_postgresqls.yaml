@@ -39,10 +39,70 @@ spec:
           spec:
             description: spec defines the desired state of PostgreSQL
             properties:
-              foo:
-                description: foo is an example field of PostgreSQL. Edit postgresql_types.go
-                  to remove/update
+              authSecret:
+                description: Auth contains the references to the authentication details
+                  needed to connect to Scalingo.
+                properties:
+                  key:
+                    default: token
+                    description: |-
+                      SecretKey is the key within the Secret that holds the authentication information.
+                      If not specified, it defaults to "token".
+                    type: string
+                  name:
+                    description: SecretName is the name of the Kubernetes Secret that
+                      contains authentication details.
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
+              connInfoSecretTarget:
+                properties:
+                  name:
+                    description: The name of the secret to create or update with the
+                      connection information.
+                    minLength: 1
+                    type: string
+                  namespace:
+                    description: |-
+                      Namespace where the secret will be created.
+                      If not specified, the secret will be created in the same namespace as the PostgreSQL resource.
+                    type: string
+                  prefix:
+                    description: |-
+                      Prefix for the secret keys.
+                      Added as is without any transformation.
+                      By default, the prefix uses the following format: "SCALINGO_<DB_TYPE>_"
+                    type: string
+                required:
+                - name
+                type: object
+              name:
+                description: Name is the name of the PostgreSQL database to create
+                  on Scalingo.
+                minLength: 5
                 type: string
+              plan:
+                description: Plan is the plan to use for the PostgreSQL database.
+                minLength: 10
+                type: string
+              projectID:
+                description: |-
+                  ProjectID is the Scalingo project ID where the PostgreSQL database will be created.
+                  If not specified, the default project associated with the authentication token will be used.
+                type: string
+              region:
+                default: osc-fr1
+                description: Region is the Scalingo region where the PostgreSQL database
+                  will be created.
+                type: string
+            required:
+            - authSecret
+            - connInfoSecretTarget
+            - name
+            - plan
+            - region
             type: object
           status:
             description: status defines the observed state of PostgreSQL
@@ -116,6 +176,10 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              scalingoDatabaseID:
+                description: ScalingoDatabaseID is the unique identifier of the PostgreSQL
+                  database on Scalingo.
+                type: string
             type: object
         required:
         - spec
