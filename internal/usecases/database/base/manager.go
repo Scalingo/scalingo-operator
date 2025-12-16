@@ -51,5 +51,8 @@ func (m *manager) UpdateDatabase(ctx context.Context, currentDB, expectedDB doma
 	return domain.Database{}, domain.ErrNotImplemented
 }
 func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {
-	return domain.ErrNotImplemented
+	if dbID == "" {
+		return errors.New(ctx, "empty database id")
+	}
+	return m.scClient.DeleteDatabase(ctx, dbID)
 }
