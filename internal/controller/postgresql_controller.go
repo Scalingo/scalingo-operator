@@ -82,10 +82,12 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Read secret token.
-	authSecret := domain.Secret{Namespace: req.Namespace, Name: postgresql.Spec.AuthSecret.Name, Key: postgresql.Spec.AuthSecret.Key}
+	secretManager := helpers.NewSecretManager(r.Client, &postgresql)
 
+	authSecret := domain.Secret{Namespace: req.Namespace, Name: postgresql.Spec.AuthSecret.Name, Key: postgresql.Spec.AuthSecret.Key}
 	log.Info("Get auth secret", "secret", authSecret)
-	apiToken, err := helpers.GetSecret(ctx, r.Client, authSecret)
+
+	apiToken, err := secretManager.GetSecret(ctx, authSecret)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(ctx, err, "get auth secret")
 	}
@@ -145,7 +147,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// Wait for database creation.
 		currentDB, err := dbManager.GetDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
 		if err != nil {
-
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "get current database %s", postgresql.Status.ScalingoDatabaseID)
 		}
 
@@ -162,20 +163,16 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if err != nil {
 				return ctrl.Result{}, errors.Wrap(ctx, err, "get database url")
 			}
-			log.Info("gathered DB URL", "DB URL", dbURL) // TODO(david): remove
 
-			if postgresql.Spec.ConnInfoSecretTarget.Prefix != "" {
-				dbURL.Name = postgresql.Spec.ConnInfoSecretTarget.Prefix + "_URL" // TODO(david): add const for suffix
-			}
 			connInfoSecret := domain.Secret{
 				Namespace: req.Namespace,
 				Name:      postgresql.Spec.ConnInfoSecretTarget.Name,
-				Key:       dbURL.Name,
+				Key:       helpers.ComposeConnectionURLName(postgresql.Spec.ConnInfoSecretTarget.Prefix, dbURL.Name),
 				Value:     dbURL.Value,
 			}
-
 			log.Info("Write connection info secret", "secret", connInfoSecret)
-			err = helpers.SetSecret(ctx, r.Client, &postgresql, r.Scheme, connInfoSecret)
+
+			err = secretManager.SetSecret(ctx, connInfoSecret)
 			if err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
 			}

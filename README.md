@@ -65,7 +65,7 @@ kubectl describe secret $NAME
 kubectl get secret $NAME -o jsonpath='{.data}' | grep $PREFIX
 
 # gather the returned base64 content and decode, example:
-echo "eG94b3hveG8=" | base64 --decode
+echo "ZGJfY29ubmVjdGlvbl9zdHJpbmc=" | base64 --decode
 ```
 
 ## Remove Database

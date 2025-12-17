@@ -8,12 +8,23 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func GetSecret(ctx context.Context, reader client.Reader, secret domain.Secret) (string, error) {
+type SecretManager struct {
+	client             client.Client
+	databaseMetaObject metav1.Object
+}
+
+func NewSecretManager(client client.Client, databaseMetaObject metav1.Object) *SecretManager {
+	return &SecretManager{
+		client:             client,
+		databaseMetaObject: databaseMetaObject,
+	}
+}
+
+func (m SecretManager) GetSecret(ctx context.Context, secret domain.Secret) (string, error) {
 	if secret.Namespace == "" {
 		return "", errors.New(ctx, "empty namespace")
 	}
@@ -25,7 +36,7 @@ func GetSecret(ctx context.Context, reader client.Reader, secret domain.Secret) 
 	}
 
 	coreSecret := &corev1.Secret{}
-	err := reader.Get(ctx, client.ObjectKey{Namespace: secret.Namespace, Name: secret.Name}, coreSecret)
+	err := m.client.Get(ctx, client.ObjectKey{Namespace: secret.Namespace, Name: secret.Name}, coreSecret)
 	if err != nil {
 		return "", errors.Wrap(ctx, err, "get auth secret")
 	}
@@ -36,7 +47,7 @@ func GetSecret(ctx context.Context, reader client.Reader, secret domain.Secret) 
 	return string(data), nil
 }
 
-func SetSecret(ctx context.Context, client client.Client, controlled metav1.Object, scheme *runtime.Scheme, secret domain.Secret) error {
+func (m SecretManager) SetSecret(ctx context.Context, secret domain.Secret) error {
 	if secret.Namespace == "" {
 		return errors.New(ctx, "empty namespace")
 	}
@@ -57,14 +68,14 @@ func SetSecret(ctx context.Context, client client.Client, controlled metav1.Obje
 		},
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, client, coreSecret, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, m.client, coreSecret, func() error {
 		if coreSecret.Data == nil {
 			coreSecret.Data = make(map[string][]byte)
 		}
 
 		coreSecret.Data[secret.Key] = []byte(secret.Value)
 
-		err := controllerutil.SetControllerReference(controlled, coreSecret, scheme)
+		err := controllerutil.SetControllerReference(m.databaseMetaObject, coreSecret, m.client.Scheme())
 		if err != nil {
 			return errors.Wrap(ctx, err, "set controller reference on secret")
 		}
@@ -75,3 +86,12 @@ func SetSecret(ctx context.Context, client client.Client, controlled metav1.Obje
 	}
 	return nil
 }
+
+func ComposeConnectionURLName(prefix, defaultName string) string {
+	if prefix == "" {
+		return defaultName
+	}
+	return prefix + connectionURLNameSuffix
+}
+
+const connectionURLNameSuffix = "_URL"

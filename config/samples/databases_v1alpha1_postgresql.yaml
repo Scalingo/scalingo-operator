@@ -13,7 +13,7 @@ spec:
     name: my-postgresql-secret
     prefix: PG
 
-  name: test-operator-david
+  name: my-dbng-name
   plan: postgresql-ng-starter-1024
   region: osc-st-fr1
   projectID: prj-da48cd16-6876-4200-91e1-ca7234d8bf44
