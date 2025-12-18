@@ -5,7 +5,7 @@ type Database struct {
 	AppID     string
 	Name      string
 	Type      DatabaseType
-	Status    DatabaseStatus
+	Status    AddonStatus
 	Plan      string
 	ProjectID string
 }
