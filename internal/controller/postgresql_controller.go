@@ -132,7 +132,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
-		helpers.SetDatabaseStatusProvisionning(&postgresql.Status.Conditions)
+		helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
 
 		err = r.Status().Update(ctx, &postgresql)
 		if err != nil {
@@ -148,8 +148,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		if currentDB.Status == domain.AddonStatusRunning {
-			log.Info("Database is provisionned")
-			helpers.SetDatabaseStatusProvisionned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
+			log.Info("Database is provisioned")
+			helpers.SetDatabaseStatusProvisioned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
 
 			err = r.Status().Update(ctx, &postgresql)
 			if err != nil {
@@ -175,7 +175,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
 			}
 		} else {
-			log.Info("Waiting for database being provisionned")
+			log.Info("Waiting for database being provisioned")
 			requeue = true
 		}
 	}
