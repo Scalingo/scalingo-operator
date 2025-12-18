@@ -120,12 +120,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if err != nil {
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
 		}
-
 		controllerutil.RemoveFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
-		err = r.Update(ctx, &postgresql)
-		if err != nil {
-			return ctrl.Result{}, errors.Wrapf(ctx, err, "remove finalizer %s", helpers.PostgreSQLFinalizerName)
-		}
 	} else if !isDatabaseRunning && postgresql.Status.ScalingoDatabaseID == "" {
 		// Create database.
 		log.Info("Create database")
@@ -138,10 +133,12 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
 		helpers.SetDatabaseStatusProvisionning(&postgresql.Status.Conditions)
+
 		err = r.Status().Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s status", newDB.ID)
+			return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
 		}
+
 		requeue = true
 	} else if postgresql.Status.ScalingoDatabaseID != "" {
 		// Wait for database creation.
@@ -153,9 +150,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if currentDB.Status == domain.AddonStatusRunning {
 			log.Info("Database is provisionned")
 			helpers.SetDatabaseStatusProvisionned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
-			err = r.Update(ctx, &postgresql)
+
+			err = r.Status().Update(ctx, &postgresql)
 			if err != nil {
-				return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s status", currentDB.ID)
+				return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
 			}
 
 			// Write connection info in secret
@@ -180,6 +178,11 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.Info("Waiting for database being provisionned")
 			requeue = true
 		}
+	}
+
+	err = r.Update(ctx, &postgresql)
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(ctx, err, "update database")
 	}
 
 	if requeue {
