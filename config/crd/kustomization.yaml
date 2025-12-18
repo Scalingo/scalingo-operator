@@ -3,7 +3,6 @@
 # It should be run by config/default
 resources:
 - bases/databases.scalingo.com_postgresqls.yaml
-- bases/databases.scalingo.com_opensearches.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

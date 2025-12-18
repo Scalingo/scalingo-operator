@@ -103,9 +103,7 @@ chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/
 ```sh
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
 kubebuilder create api --group databases --version v1alpha1 --kind PostgreSQL
-kubebuilder create api --group databases --version v1alpha1 --kind OpenSearch
 make manifests
-make generate
 make install
 ```
 
