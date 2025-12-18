@@ -102,7 +102,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
-	IsDatabaseProvisionned := helpers.IsDatabaseProvisionned(postgresql.Status.Conditions)
+	IsDatabaseProvisioning := helpers.IsDatabaseProvisioning(postgresql.Status.Conditions)
 	requeue := false
 
 	log.Info("Current state",
@@ -110,7 +110,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		"running", isDatabaseRunning,
 		"deletion_requested", isDatabaseDeletionRequested,
 		"available", isDatabaseAvailable,
-		"provisionned", IsDatabaseProvisionned)
+		"provisioning", IsDatabaseProvisioning)
 
 	if isDatabaseDeletionRequested {
 		// Delete database.

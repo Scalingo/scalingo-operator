@@ -24,7 +24,7 @@ func IsDatabaseAvailable(conditions []metav1.Condition) bool {
 	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionAvailable))
 }
 
-func IsDatabaseProvisionned(conditions []metav1.Condition) bool {
+func IsDatabaseProvisioning(conditions []metav1.Condition) bool {
 	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionProvisioning))
 }
 
