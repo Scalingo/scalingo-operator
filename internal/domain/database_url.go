@@ -2,7 +2,7 @@ package domain
 
 import "fmt"
 
-const connectionURLNameSuffix = "_URL"
+const ConnectionURLNameSuffix = "_URL"
 
 type DatabaseURL struct {
 	Name  string
@@ -17,5 +17,5 @@ func ComposeConnectionURLName(prefix, defaultName string) string {
 	if prefix == "" {
 		return defaultName
 	}
-	return prefix + connectionURLNameSuffix
+	return prefix + ConnectionURLNameSuffix
 }

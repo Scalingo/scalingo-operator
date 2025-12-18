@@ -165,7 +165,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			connInfoSecret := domain.Secret{
 				Namespace: req.Namespace,
 				Name:      postgresql.Spec.ConnInfoSecretTarget.Name,
-				Key:       helpers.ComposeConnectionURLName(postgresql.Spec.ConnInfoSecretTarget.Prefix, dbURL.Name),
+				Key:       domain.ComposeConnectionURLName(postgresql.Spec.ConnInfoSecretTarget.Prefix, dbURL.Name),
 				Value:     dbURL.Value,
 			}
 			log.Info("Write connection info secret", "secret", connInfoSecret)

@@ -86,12 +86,3 @@ func (m SecretManager) SetSecret(ctx context.Context, secret domain.Secret) erro
 	}
 	return nil
 }
-
-func ComposeConnectionURLName(prefix, defaultName string) string {
-	if prefix == "" {
-		return defaultName
-	}
-	return prefix + connectionURLNameSuffix
-}
-
-const connectionURLNameSuffix = "_URL"
