@@ -147,7 +147,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "get current database %s", postgresql.Status.ScalingoDatabaseID)
 		}
 
-		if currentDB.Status == domain.AddonStatusRunning {
+		if currentDB.Status == domain.DatabaseStatusRunning {
 			log.Info("Database is provisioned")
 			helpers.SetDatabaseStatusProvisioned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
 
