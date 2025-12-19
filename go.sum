@@ -1,7 +1,7 @@
 cel.dev/expr v0.24.0 h1:56OvJKSH3hDGL0ml5uSxZmz3/3Pq4tJ+fb1unVLAFcY=
 cel.dev/expr v0.24.0/go.mod h1:hLPLo1W4QUmuYdA72RBX06QTs6MXw941piREPl3Yfiw=
-github.com/Scalingo/go-scalingo/v8 v8.9.1 h1:P/GQHUy1pn0VSwm81sA5zaXF8eeShxTmEjTMfRQLEZs=
-github.com/Scalingo/go-scalingo/v8 v8.9.1/go.mod h1:C87ufsz8H4/tUutK6cAmUaLpM4HwV8QOGAyfZyRgFAA=
+github.com/Scalingo/go-scalingo/v8 v8.9.2 h1:dK12pdxRcJ2QzgQQOn3MzBZ4s3EI+JQ5lnLFweKnuMY=
+github.com/Scalingo/go-scalingo/v8 v8.9.2/go.mod h1:C87ufsz8H4/tUutK6cAmUaLpM4HwV8QOGAyfZyRgFAA=
 github.com/Scalingo/go-utils/errors/v2 v2.5.1 h1:1tfJW6/ZxTgrRmFTlKQCOtArQquOW0/XdZQzx8wMHoM=
 github.com/Scalingo/go-utils/errors/v2 v2.5.1/go.mod h1:SbR1JuMtfAl+gpM7ahUW/c3Jm5MMzMAwJBk1pEHkVd8=
 github.com/Scalingo/go-utils/errors/v3 v3.1.1 h1:G2xEB4grlMvSg1Do4RZOLm2oBfSfQe+NSRs6+lMPxaQ=

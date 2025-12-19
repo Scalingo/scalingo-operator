@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.5
 
 require (
-	github.com/Scalingo/go-scalingo/v8 v8.9.1
+	github.com/Scalingo/go-scalingo/v8 v8.9.2
 	github.com/Scalingo/go-utils/errors/v3 v3.1.1
 	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.36.1
