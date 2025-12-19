@@ -10,11 +10,10 @@ spec:
     name: scalingo
     key: api_token
   connInfoSecretTarget:
-    name: myPostgreSQLSecret
+    name: my-postgresql-secret
     prefix: PG
-    namespace: my-kubernetes-namespace
 
-  name: my-staging-db-name
+  name: my-dbng-name
   plan: postgresql-ng-starter-1024
   region: osc-st-fr1
   projectID: prj-da48cd16-6876-4200-91e1-ca7234d8bf44

@@ -69,8 +69,6 @@ type EventUser struct {
 	ID       string `json:"id"`
 }
 
-const ScalingoDeployUserEmail = "deploy@scalingo.com"
-
 type EventTypeName string
 
 const (
@@ -106,8 +104,6 @@ const (
 	EventSuspendAddon                EventTypeName = "suspend_addon"
 	EventDatabaseAddFeature          EventTypeName = "database/add_feature"
 	EventDatabaseRemoveFeature       EventTypeName = "database/remove_feature"
-	EventDatabaseBackupFailed        EventTypeName = "database_backup_failed"
-	EventDatabaseBackupSucceeded     EventTypeName = "database_backup_succeeded"
 	EventNewCollaborator             EventTypeName = "new_collaborator"
 	EventAcceptCollaborator          EventTypeName = "accept_collaborator"
 	EventDeleteCollaborator          EventTypeName = "delete_collaborator"
@@ -319,7 +315,7 @@ func (ev *EventRunType) String() string {
 }
 
 func (ev *EventRunType) Who() string {
-	if ev.User.Email == ScalingoDeployUserEmail {
+	if ev.User.Email == "deploy@scalingo.com" {
 		return "Scalingo Operator"
 	}
 

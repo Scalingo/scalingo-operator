@@ -82,8 +82,12 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Read secret token.
-	log.Info("Get auth secret", "namespace", req.Namespace, "name", postgresql.Spec.AuthSecret.Name, "key", postgresql.Spec.AuthSecret.Key)
-	apiToken, err := helpers.GetSecret(ctx, r.Client, req.Namespace, postgresql.Spec.AuthSecret.Name, postgresql.Spec.AuthSecret.Key)
+	secretManager := helpers.NewSecretManager(r.Client, &postgresql)
+
+	authSecret := domain.Secret{Namespace: req.Namespace, Name: postgresql.Spec.AuthSecret.Name, Key: postgresql.Spec.AuthSecret.Key}
+	log.Info("Get auth secret", "secret", authSecret)
+
+	apiToken, err := secretManager.GetSecret(ctx, authSecret)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(ctx, err, "get auth secret")
 	}
@@ -98,7 +102,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
-	IsDatabaseProvisionned := helpers.IsDatabaseProvisionned(postgresql.Status.Conditions)
+	IsDatabaseProvisioning := helpers.IsDatabaseProvisioning(postgresql.Status.Conditions)
 	requeue := false
 
 	log.Info("Current state",
@@ -106,7 +110,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		"running", isDatabaseRunning,
 		"deletion_requested", isDatabaseDeletionRequested,
 		"available", isDatabaseAvailable,
-		"provisionned", IsDatabaseProvisionned)
+		"provisioning", IsDatabaseProvisioning)
 
 	if isDatabaseDeletionRequested {
 		// Delete database.
@@ -114,29 +118,27 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "delete database")
+			return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
 		}
-
 		controllerutil.RemoveFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
-		err = r.Update(ctx, &postgresql)
-		if err != nil {
-			return ctrl.Result{}, errors.Wrapf(ctx, err, "remove finalizer %s", helpers.PostgreSQLFinalizerName)
-		}
 	} else if !isDatabaseRunning && postgresql.Status.ScalingoDatabaseID == "" {
 		// Create database.
 		log.Info("Create database")
 
 		newDB, err := dbManager.CreateDatabase(ctx, expectedDB)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "create database")
+			log.Error(err, "Create database", "database", expectedDB)
+			return ctrl.Result{}, errors.Wrapf(ctx, err, "create database with name %s", expectedDB.Name)
 		}
 
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
-		helpers.SetDatabaseStatusProvisionning(&postgresql.Status.Conditions)
+		helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
+
 		err = r.Status().Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s status", newDB.ID)
+			return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
 		}
+
 		requeue = true
 	} else if postgresql.Status.ScalingoDatabaseID != "" {
 		// Wait for database creation.
@@ -146,18 +148,41 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		if currentDB.Status == domain.DatabaseStatusRunning {
-			log.Info("Database is provisionned")
-			helpers.SetDatabaseStatusProvisionned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
-			err = r.Update(ctx, &postgresql)
+			log.Info("Database is provisioned")
+			helpers.SetDatabaseStatusProvisioned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
+
+			err = r.Status().Update(ctx, &postgresql)
 			if err != nil {
-				return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s status", currentDB.ID)
+				return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
 			}
 
-			// TODO(david): set conn info secret.
+			// Write connection info in secret
+			dbURL, err := dbManager.GetDatabaseURL(ctx, currentDB)
+			if err != nil {
+				return ctrl.Result{}, errors.Wrap(ctx, err, "get database url")
+			}
+
+			connInfoSecret := domain.Secret{
+				Namespace: req.Namespace,
+				Name:      postgresql.Spec.ConnInfoSecretTarget.Name,
+				Key:       domain.ComposeConnectionURLName(postgresql.Spec.ConnInfoSecretTarget.Prefix, dbURL.Name),
+				Value:     dbURL.Value,
+			}
+			log.Info("Write connection info secret", "secret", connInfoSecret)
+
+			err = secretManager.SetSecret(ctx, connInfoSecret)
+			if err != nil {
+				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
+			}
 		} else {
-			log.Info("Waiting for database being provisionned")
+			log.Info("Waiting for database being provisioned")
 			requeue = true
 		}
+	}
+
+	err = r.Update(ctx, &postgresql)
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(ctx, err, "update database")
 	}
 
 	if requeue {

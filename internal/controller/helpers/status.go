@@ -24,7 +24,7 @@ func IsDatabaseAvailable(conditions []metav1.Condition) bool {
 	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionAvailable))
 }
 
-func IsDatabaseProvisionned(conditions []metav1.Condition) bool {
+func IsDatabaseProvisioning(conditions []metav1.Condition) bool {
 	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionProvisioning))
 }
 
@@ -41,21 +41,21 @@ func SetDatabaseInitialState(dbMeta *metav1.ObjectMeta, conditions *[]metav1.Con
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:    string(DatabaseStatusConditionProvisioning),
 		Status:  metav1.ConditionFalse,
-		Reason:  reasonNotProvisionned,
-		Message: msgNotProvisionned,
+		Reason:  reasonNotprovisioned,
+		Message: msgNotProvisioned,
 	})
 }
 
-func SetDatabaseStatusProvisionning(conditions *[]metav1.Condition) {
+func SetDatabaseStatusProvisioning(conditions *[]metav1.Condition) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:    string(DatabaseStatusConditionProvisioning),
 		Status:  metav1.ConditionTrue,
-		Reason:  reasonProvisionning,
-		Message: msgProvisionning,
+		Reason:  reasonProvisioning,
+		Message: msgProvisioning,
 	})
 }
 
-func SetDatabaseStatusProvisionned(dbMeta *metav1.ObjectMeta, conditions *[]metav1.Condition) {
+func SetDatabaseStatusProvisioned(dbMeta *metav1.ObjectMeta, conditions *[]metav1.Condition) {
 	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueTrue)
 
 	meta.SetStatusCondition(conditions, metav1.Condition{
@@ -67,24 +67,24 @@ func SetDatabaseStatusProvisionned(dbMeta *metav1.ObjectMeta, conditions *[]meta
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:    string(DatabaseStatusConditionProvisioning),
 		Status:  metav1.ConditionFalse,
-		Reason:  reasonProvisionned,
-		Message: msgProvisionned,
+		Reason:  reasonProvisioned,
+		Message: msgProvisioned,
 	})
 }
 
 // Private constants.
 const (
-	reasonNotAvailable    = "DatabaseNotAvailable"
-	reasonAvailable       = "DatabaseAvailable"
-	reasonNotProvisionned = "DatabaseNotProvisionned"
-	reasonProvisionning   = "DatabaseProvisionning"
-	reasonProvisionned    = "DatabaseProvisionned"
+	reasonNotAvailable   = "DatabaseNotAvailable"
+	reasonAvailable      = "DatabaseAvailable"
+	reasonNotprovisioned = "DatabaseNotprovisioned"
+	reasonProvisioning   = "DatabaseProvisioning"
+	reasonProvisioned    = "Databaseprovisioned"
 
-	msgNotAvailable    = "The database is not yet available on Scalingo."
-	msgAvailable       = "The database is available on Scalingo."
-	msgNotProvisionned = "The database is not yet provisionned on Scalingo."
-	msgProvisionning   = "The database is being provisionned on Scalingo."
-	msgProvisionned    = "The database is provisionned on Scalingo."
+	msgNotAvailable   = "The database is not yet available on Scalingo."
+	msgAvailable      = "The database is available on Scalingo."
+	msgNotProvisioned = "The database is not yet provisioned on Scalingo."
+	msgProvisioning   = "The database is being provisioned on Scalingo."
+	msgProvisioned    = "The database is provisioned on Scalingo."
 
 	annotationValueTrue  = "true"
 	annotationValueFalse = "false"

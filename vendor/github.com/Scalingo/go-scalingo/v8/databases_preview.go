@@ -4,7 +4,6 @@ import (
 	"context"
 	stderrors "errors"
 
-	"github.com/Scalingo/go-scalingo/v8/debug"
 	"github.com/Scalingo/go-utils/errors/v2"
 )
 
@@ -27,17 +26,9 @@ var _ DatabasesPreviewService = (*PreviewClient)(nil)
 
 // DatabaseNG stands for Database Next Generation.
 type DatabaseNG struct {
-	ID         string   `json:"id"`
-	Name       string   `json:"name"`
-	ProjectID  string   `json:"project_id"`
-	Technology string   `json:"technology"`
-	Plan       string   `json:"plan"`
-	Database   Database `json:"database"`
-	App        App      `json:"app"`
-}
-
-type databaseListItem struct {
-	Database DatabaseNG `json:"database"`
+	App      App       `json:"app"`
+	Addon    Addon     `json:"addon"`
+	Database *Database `json:"database,omitempty"`
 }
 
 type PreviewClient struct {
@@ -68,35 +59,32 @@ func (c *PreviewClient) DatabaseCreate(ctx context.Context, params DatabaseCreat
 }
 
 func (c *PreviewClient) DatabasesList(ctx context.Context) ([]DatabaseNG, error) {
-	var listRes []databaseListItem
+	var res []DatabaseNG
 
-	err := c.parent.ScalingoAPI().ResourceList(ctx, databasesResource, nil, &listRes)
+	err := c.parent.ScalingoAPI().ResourceList(ctx, databasesResource, nil, &res)
 	if err != nil {
-		return nil, errors.Wrap(ctx, err, "list databases")
+		return res, errors.Wrap(ctx, err, "list databases")
 	}
-
-	databasesNG := make([]DatabaseNG, len(listRes))
-
-	for i, apiResponse := range listRes {
-		dbNG, err := c.populateAPIResponse(ctx, apiResponse)
-		if err != nil {
-			return nil, errors.Wrap(ctx, err, "populate database NG")
-		}
-
-		databasesNG[i] = dbNG
-	}
-
-	return databasesNG, nil
+	return res, nil
 }
 
 // DatabaseShow currently uses appID as the database identifier.
 func (c *PreviewClient) DatabaseShow(ctx context.Context, appID string) (DatabaseNG, error) {
 	var res DatabaseNG
 
-	res, err := c.searchDatabase(ctx, appID)
+	databaseNG, err := c.searchDatabase(ctx, appID)
 	if err != nil {
 		return res, errors.Wrap(ctx, err, "search database")
 	}
+
+	database, err := c.parent.DatabaseShow(ctx, databaseNG.App.ID, databaseNG.Addon.ID)
+	if err != nil {
+		return res, errors.Wrap(ctx, err, "show database")
+	}
+
+	res.App = databaseNG.App
+	res.Addon = databaseNG.Addon
+	res.Database = &database
 
 	return res, nil
 }
@@ -108,7 +96,9 @@ func (c *PreviewClient) DatabaseDestroy(ctx context.Context, appID string) error
 		return errors.Wrap(ctx, err, "search database")
 	}
 
-	err = c.parent.AppsDestroy(ctx, database.Name, database.Name)
+	appName := database.App.Name
+
+	err = c.parent.AppsDestroy(ctx, appName, appName)
 	if err != nil {
 		return errors.Wrap(ctx, err, "destroy database app")
 	}
@@ -125,42 +115,9 @@ func (c *PreviewClient) searchDatabase(ctx context.Context, appID string) (Datab
 	}
 
 	for _, databaseNG := range databases {
-		if databaseNG.ID == appID {
+		if databaseNG.App.ID == appID {
 			return databaseNG, nil
 		}
 	}
 	return res, ErrDatabaseNotFound
-}
-
-// populateAPIResponse populates a DatabaseNG without using the App and Addon from the databases endpoints.
-func (c *PreviewClient) populateAPIResponse(ctx context.Context, apiResponse databaseListItem) (DatabaseNG, error) {
-	databaseNG := DatabaseNG{
-		ID:         apiResponse.Database.ID,
-		Name:       apiResponse.Database.Name,
-		ProjectID:  apiResponse.Database.ProjectID,
-		Technology: apiResponse.Database.Technology,
-		Plan:       apiResponse.Database.Plan,
-	}
-
-	addons, err := c.parent.AddonsList(ctx, apiResponse.Database.ID)
-	if err != nil {
-		return databaseNG, errors.Wrap(ctx, err, "list addons")
-	}
-
-	if len(addons) == 0 {
-		return databaseNG, errors.New(ctx, "no addons found for database")
-	}
-
-	app, err := c.parent.AppsShow(ctx, apiResponse.Database.Name)
-	if err != nil {
-		return databaseNG, errors.Wrap(ctx, err, "show app")
-	}
-	databaseNG.App = *app
-
-	databaseNG.Database, err = c.parent.DatabaseShow(ctx, apiResponse.Database.ID, addons[0].ID)
-	if err != nil {
-		debug.Printf("Addon has been removed from app: %+v\n", databaseNG.Name)
-	}
-
-	return databaseNG, nil
 }

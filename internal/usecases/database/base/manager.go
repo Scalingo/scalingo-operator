@@ -47,6 +47,23 @@ func (m *manager) GetDatabase(ctx context.Context, dbID string) (domain.Database
 	return m.scClient.GetDatabase(ctx, dbID)
 }
 
+func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domain.DatabaseURL, error) {
+	dbTypeName, err := toDatabaseTypeName(ctx, db.Type)
+	if err != nil {
+		return domain.DatabaseURL{}, errors.Wrap(ctx, err, "to database type name")
+	}
+
+	varName := "SCALINGO_" + dbTypeName + "_URL"
+	varValue, err := m.scClient.FindApplicationVariable(ctx, db.AppID, varName)
+	if err != nil {
+		return domain.DatabaseURL{}, errors.Wrap(ctx, err, "find database url")
+	}
+	return domain.DatabaseURL{
+		Name:  varName,
+		Value: varValue,
+	}, nil
+}
+
 func (m *manager) UpdateDatabase(ctx context.Context, currentDB, expectedDB domain.Database) (domain.Database, error) {
 	return domain.Database{}, domain.ErrNotImplemented
 }
@@ -55,4 +72,14 @@ func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {
 		return errors.New(ctx, "empty database id")
 	}
 	return m.scClient.DeleteDatabase(ctx, dbID)
+}
+
+func toDatabaseTypeName(ctx context.Context, dbType domain.DatabaseType) (string, error) {
+	switch dbType {
+	case domain.DatabaseTypePostgreSQL:
+		return "POSTGRESQL", nil
+	default:
+		return "", errors.Newf(ctx, "no matching type for %s", dbType)
+	}
+
 }
