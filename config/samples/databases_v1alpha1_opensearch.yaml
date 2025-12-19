@@ -1,9 +1,0 @@
-apiVersion: databases.scalingo.com/v1alpha1
-kind: OpenSearch
-metadata:
-  labels:
-    app.kubernetes.io/name: scalingo-operator
-    app.kubernetes.io/managed-by: kustomize
-  name: opensearch-sample
-spec:
-  foo: bar

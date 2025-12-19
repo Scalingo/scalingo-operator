@@ -129,9 +129,7 @@ These commands were executed to create this operator:
 ```sh
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
 kubebuilder create api --group databases --version v1alpha1 --kind PostgreSQL
-kubebuilder create api --group databases --version v1alpha1 --kind OpenSearch
 make manifests
-make generate
 make install
 ```
 
