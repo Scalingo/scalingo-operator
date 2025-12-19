@@ -24,6 +24,7 @@ func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain
 		Name:            db.Name,
 		ProjectID:       db.ProjectID,
 	})
+
 	if err != nil {
 		return domain.Database{}, errors.Wrap(ctx, err, "create database")
 	}
@@ -80,7 +81,7 @@ func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 	}
 
 	return domain.Database{
-		ID:        db.Database.ID,
+		ID:        db.ID,
 		AppID:     db.App.ID,
 		Name:      db.App.Name,
 		Type:      dbType,
