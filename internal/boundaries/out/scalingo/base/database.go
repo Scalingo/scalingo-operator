@@ -24,6 +24,7 @@ func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain
 		Name:            db.Name,
 		ProjectID:       db.ProjectID,
 	})
+
 	if err != nil {
 		return domain.Database{}, errors.Wrap(ctx, err, "create database")
 	}
@@ -60,11 +61,13 @@ func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
 	}
 }
 
-func toDatabaseStatus(status scalingoapi.AddonStatus) domain.DatabaseStatus {
+func toDatabaseStatus(status scalingoapi.DatabaseStatus) domain.DatabaseStatus {
 	switch status {
-	case scalingoapi.AddonStatusProvisioning:
+
+	case scalingoapi.DatabaseStatusCreating, scalingoapi.DatabaseStatusUpdating,
+		scalingoapi.DatabaseStatusMigrating, scalingoapi.DatabaseStatusUpgrading:
 		return domain.DatabaseStatusProvisioning
-	case scalingoapi.AddonStatusRunning:
+	case scalingoapi.DatabaseStatusRunning:
 		return domain.DatabaseStatusRunning
 	default:
 		return domain.DatabaseStatusSuspended
@@ -78,11 +81,11 @@ func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 	}
 
 	return domain.Database{
-		ID:        db.Database.ID,
+		ID:        db.ID,
 		AppID:     db.App.ID,
 		Name:      db.App.Name,
 		Type:      dbType,
-		Status:    toDatabaseStatus(db.Addon.Status),
+		Status:    toDatabaseStatus(db.Database.Status),
 		Plan:      db.Database.Plan,
 		ProjectID: db.App.Project.ID,
 	}, nil
