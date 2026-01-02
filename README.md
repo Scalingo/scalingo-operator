@@ -52,7 +52,7 @@ kubectl get crds
 kubectl create namespace my-namespace
 kubectl get namespaces
 
-kubectl create deployment my-operator --image=scalingo/scalingo-operator:$VERSION -n my-namespace
+kubectl create deployment my-operator --image=scalingo/scalingo-operator:v$VERSION -n my-namespace
 kubectl get deploy,pods -n my-namespace
 
 # Follow operator logs
@@ -216,21 +216,6 @@ make help
 
 ## Tips and Tricks
 
-### Force-pull the Operator image
-
-Set the Manager parameter `imagePullPolicy` to Always (default value being `IfNotPresent`).
-
-In `config/manager/manager.yaml`, add this line:
-```sh
-imagePullPolicy: Always
-```
-bellow:
-```sh
-image: controller:latest
-```
-then, execute `make deploy IMG=...`.
-
-
 ### Force-delete the CRD
 
 In case the kubernetes delete CRD hangs indefinetly, as with such command:
@@ -256,13 +241,19 @@ kubectl edit $KIND $NAME
 kubectl delete crd $CRD
 ```
 
-### Reset microk8s Cluster
+### Force-pull the Operator image
 
-Use with cautious, this command disables all addons, removes all the resources and CRDs, then restarts the cluster.
+Set the Manager parameter `imagePullPolicy` to Always (default value being `IfNotPresent`).
 
+In `config/manager/manager.yaml`, add this line:
 ```sh
-sudo microk8s reset
+imagePullPolicy: Always
 ```
+bellow:
+```sh
+image: controller:latest
+```
+then, execute `make deploy IMG=...`.
 
 # Useful Links
 
