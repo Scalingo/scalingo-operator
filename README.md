@@ -152,6 +152,11 @@ export  KUBECONFIG=$KUBECONFIG:$HOME/.kube/microk8s.config
 # verification: both commands must return the same informations
 microk8s.kubectl config view
 kubectl config view
+
+# ensure some microk8s modules are enabled
+microk8s enable dns
+microk8s enable rbac
+microk8s status
 ```
 
 ## Download Kubebuilder and Install Locally
