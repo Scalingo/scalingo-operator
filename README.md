@@ -1,6 +1,6 @@
 # Scalingo Operator
 
-The Scalingo Operator can deploy and undeploy PostgreSQL databases next generation addons on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
+The Scalingo Operator can deploy and undeploy PostgreSQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
 # Definitions
 
@@ -61,7 +61,7 @@ kubectl logs deploy/my-operator -n my-namespace -f
 
 ## Deploy Database Resource
 
-Once the operator is deployed and running, deploy the database resource using  its descriptor.
+Once the operator is deployed and running, deploy the database resource using its descriptor.
 
 Using PostgreSQL sample example:
 ```sh
