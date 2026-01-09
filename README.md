@@ -30,7 +30,7 @@ Then, execute the Kubernetes operator on your cluster and deploy the expected da
 
 ```sh
 # create secret
-export SCALINGO_TOKEN="tk-my_token"
+SCALINGO_TOKEN="tk-my_token"
 kubectl create secret generic scalingo \
     --from-literal=api_token="$SCALINGO_TOKEN"
 
@@ -40,23 +40,22 @@ kubectl describe secret scalingo
 
 ## Deploy the Operator
 
-On the Kubernetes cluster, create the operator CRD, a new namespace, then deploy the operator from the [latest image](https://hub.docker.com/r/scalingo/scalingo-operator/tags).
+Gather and save the latest installer from the Scalingo Operator Github releases:
+https://github.com/Scalingo/scalingo-operator/releases
+
+The installer file is `install.yaml`.
+
+Then deploy the Operator controller on your Kubernetes cluster:
 
 ```sh
-export VERSION="1.0.0-alpha1"
+# install operator controller manager
+kubectl apply --filename install.yaml
 
-# Replace my-namespace and my-operator using your own names.
-kubectl apply -k config/crd
-kubectl get crds
+# verification
+kubectl get all --namespace scalingo-operator-system
 
-kubectl create namespace my-namespace
-kubectl get namespaces
-
-kubectl create deployment my-operator --image=scalingo/scalingo-operator:v$VERSION -n my-namespace
-kubectl get deploy,pods -n my-namespace
-
-# Follow operator logs
-kubectl logs deploy/my-operator -n my-namespace -f
+# follow operator logs
+kubectl logs deploy/scalingo-operator-controller-manager --namespace scalingo-operator-system --follow
 ```
 
 ## Deploy Database Resource
@@ -65,7 +64,7 @@ Once the operator is deployed and running, deploy the database resource using it
 
 Using PostgreSQL sample example:
 ```sh
-kubectl apply -f config/samples/databases_v1alpha1_postgresql.yaml
+kubectl apply --filename config/samples/databases_v1alpha1_postgresql.yaml
 ```
 
 ### Read Database URL
@@ -76,7 +75,7 @@ The secret `name` and `key` are defined in Custom Resource `connInfoSecretTarget
 To read the secret:
 ```sh
 $NAME=my-postgresql-secret  # read from CR spec.connInfoSecretTarget.name
-$PREFIX=PG                     # read from CR spec.connInfoSecretTarget.prefix
+$PREFIX=PG                  # read from CR spec.connInfoSecretTarget.prefix
 
 # list all secrets in all namespaces
 kubectl get secrets -A
@@ -97,7 +96,7 @@ Use almost the same command than deploy, with the same descriptor file: replace 
 
 Using PostgreSQL sample example:
 ```sh
-kubectl delete -f config/samples/databases_v1alpha1_postgresql.yaml
+kubectl delete --filename config/samples/databases_v1alpha1_postgresql.yaml
 ```
 
 ## Undeploy the Operator
@@ -106,12 +105,12 @@ Not necessary, if Operator undeploy is needed execute the opposite deploy comman
 
 ```sh
 # Replace my-namespace and my-operator using your own names
-kubectl delete deployment my-operator -n my-namespace
-kubectl delete namespace my-namespace
-kubectl delete -k config/crd
+kubectl delete deployment my-operator --namespace scalingo-operator-system
+kubectl delete namespace scalingo-operator-system
+kubectl delete --kustomize config/crd
 
 # Verifications
-kubectl get deploy,pods -n my-namespace
+kubectl get deploy,pods --namespace scalingo-operator-system
 kubectl get namespaces
 kubectl get crds
 ```
@@ -204,7 +203,7 @@ make run
 
 ### Build and Deploy Image
 ```sh
-export VERSION="1.0.0-alpha1"
+VERSION="1.0.0-alpha1"
 
 # build and push your image to the location specified by IMG
 make docker-build docker-push IMG=scalingo/scalingo-operator:v$VERSION
@@ -266,3 +265,34 @@ then, execute `make deploy IMG=...`.
 * [MicroK8s](https://microk8s.io/)
 * [Kubernetes operator](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
 * [Kubernetes Custom Resource Definition](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
+
+## Release a New Version
+
+> [!WARNING]
+> You first need to execute the integration tests on `main` to ensure that everything is working.
+
+Bump new version number in:
+
+- `CHANGELOG.md`
+- `README.md`: all `VERSION` contents.
+
+Commit, tag and create a new release:
+
+```sh
+VERSION="1.0.0-alpha1"
+
+git add CHANGELOG.md README.md
+git commit --message="feat: bump v${VERSION}"
+git push --set-upstream origin release/${VERSION}
+gh pr create --reviewer=scalingo/team-ist --fill-first
+```
+
+Once the pull request merged, you can tag the main branch:
+
+```sh
+git tag v${VERSION}
+git push origin main v${VERSION}
+```
+
+After tagging the branch, the process to release the archive with the installer is automatically handled by GitHub Actions. The release will be published
+on the [Scalingo Operator](https://github.com/Scalingo/scalingo-operator/releases) page.

@@ -1,5 +1,5 @@
+# Changelog
 
+## To Be Released
 
-Operator version is reflected in the operator Docker image version.
-
-WORK IN PROGRESS
+* Deploy/undeploy PostgreSQL instances hosted on dedicated resources
