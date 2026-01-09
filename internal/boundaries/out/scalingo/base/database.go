@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	scalingoapi "github.com/Scalingo/go-scalingo/v8"
+	scalingoapi "github.com/Scalingo/go-scalingo/v9"
 	errors "github.com/Scalingo/go-utils/errors/v3"
 
 	"github.com/Scalingo/scalingo-operator/internal/domain"
