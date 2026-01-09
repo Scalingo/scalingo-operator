@@ -1,6 +1,6 @@
 # Scalingo Operator
 
-Scalingo operator for Kubernetes.
+The Scalingo Operator can deploy and undeploy PostgreSQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
 # Definitions
 
@@ -24,7 +24,7 @@ Example:
 # Usage
 
 As a pre-requisite, first store your Scalingo API token in your cluster secrets.
-Then, execute the Kubernetes operator on your cluster.
+Then, execute the Kubernetes operator on your cluster and deploy the expected database resource.
 
 ## Create Secret
 
@@ -38,7 +38,30 @@ kubectl create secret generic scalingo \
 kubectl describe secret scalingo
 ```
 
-## Deploy Database
+## Deploy the Operator
+
+On the Kubernetes cluster, create the operator CRD, a new namespace, then deploy the operator from the [latest image](https://hub.docker.com/r/scalingo/scalingo-operator/tags).
+
+```sh
+export VERSION="1.0.0-alpha1"
+
+# Replace my-namespace and my-operator using your own names.
+kubectl apply -k config/crd
+kubectl get crds
+
+kubectl create namespace my-namespace
+kubectl get namespaces
+
+kubectl create deployment my-operator --image=scalingo/scalingo-operator:v$VERSION -n my-namespace
+kubectl get deploy,pods -n my-namespace
+
+# Follow operator logs
+kubectl logs deploy/my-operator -n my-namespace -f
+```
+
+## Deploy Database Resource
+
+Once the operator is deployed and running, deploy the database resource using its descriptor.
 
 Using PostgreSQL sample example:
 ```sh
@@ -68,12 +91,31 @@ kubectl get secret $NAME -o jsonpath='{.data}' | grep $PREFIX
 echo "ZGJfY29ubmVjdGlvbl9zdHJpbmc=" | base64 --decode
 ```
 
-## Remove Database
+## Undeploy Database
+
+Use almost the same command than deploy, with the same descriptor file: replace `apply` by `delete`.
 
 Using PostgreSQL sample example:
 ```sh
 kubectl delete -f config/samples/databases_v1alpha1_postgresql.yaml
 ```
+
+## Undeploy the Operator
+
+Not necessary, if Operator undeploy is needed execute the opposite deploy commands.
+
+```sh
+# Replace my-namespace and my-operator using your own names
+kubectl delete deployment my-operator -n my-namespace
+kubectl delete namespace my-namespace
+kubectl delete -k config/crd
+
+# Verifications
+kubectl get deploy,pods -n my-namespace
+kubectl get namespaces
+kubectl get crds
+```
+
 
 # Architecture
 
@@ -101,7 +143,6 @@ For this reason it is kept as is, ensuring the `Controllers` **plus** the `Bound
 sudo snap install microk8s --classic
 sudo snap install kubectl --classic
 
-
 microk8s.kubectl config view --raw > $HOME/.kube/microk8s.config
 
 # then add in ~/.zshrc
@@ -111,6 +152,11 @@ export  KUBECONFIG=$KUBECONFIG:$HOME/.kube/microk8s.config
 # verification: both commands must return the same informations
 microk8s.kubectl config view
 kubectl config view
+
+# ensure some microk8s modules are enabled
+microk8s enable dns
+microk8s enable rbac
+microk8s status
 ```
 
 ## Download Kubebuilder and Install Locally
@@ -141,9 +187,6 @@ make generate
 
 # generate the CRD manifests under config/crd/bases and a sample for it under config/samples
 make manifests
-
-# note: they can be combined
-make generate manifests
 ```
 
 ### Execute Command
@@ -169,10 +212,16 @@ make docker-build docker-push IMG=scalingo/scalingo-operator:v$VERSION
 # deploy the controller to the cluster with image specified by IMG
 make deploy IMG=scalingo/scalingo-operator:v$VERSION
 ```
+### List make Targets
+
+To list the `make` targets with their description:
+```sh
+make help
+```
 
 ## Tips and Tricks
 
-### Force delete the CRD
+### Force-delete the CRD
 
 In case the kubernetes delete CRD hangs indefinetly, as with such command:
 ```sh
@@ -196,6 +245,20 @@ kubectl edit $KIND $NAME
 # then, retry the delete
 kubectl delete crd $CRD
 ```
+
+### Force-pull the Operator image
+
+Set the Manager parameter `imagePullPolicy` to Always (default value being `IfNotPresent`).
+
+In `config/manager/manager.yaml`, add this line:
+```sh
+imagePullPolicy: Always
+```
+bellow:
+```sh
+image: controller:latest
+```
+then, execute `make deploy IMG=...`.
 
 # Useful Links
 
