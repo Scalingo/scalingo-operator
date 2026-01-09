@@ -25,7 +25,7 @@ jobs:
       - name: Build installer
         # build dist/installer.yaml using Kubebuilder tools
         run: |
-          make build-installer
+          make build-installer IMG=scalingo/scalingo-operator:${{ github.ref_name }}
          
       - name: Create GitHub release and upload installer
         env:
