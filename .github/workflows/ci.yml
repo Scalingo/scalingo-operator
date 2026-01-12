@@ -22,15 +22,4 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-24.04
     steps:
-      - name: Clone the code
-        uses: actions/checkout@v6
-
-      - name: Setup Tests
-        run: |
-          make setup-envtest
-          ls -lR bin
-          chmod -R u+w bin
-          ls -lR bin
-
-      - name: Execute Tests
-        uses: Scalingo/actions/go-tests@main
+      - uses: Scalingo/actions/go-tests@main

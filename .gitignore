@@ -7,6 +7,9 @@
 bin/*
 Dockerfile.cross
 
+# Allow Scalingo scripts
+!bin/scalingo-*
+
 # Test binary, built with `go test -c`
 *.test
 
