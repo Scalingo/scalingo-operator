@@ -1,7 +1,7 @@
 package database
 
 import (
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )

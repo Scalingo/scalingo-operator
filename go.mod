@@ -9,6 +9,7 @@ require (
 	github.com/Scalingo/go-utils/errors/v3 v3.1.1
 	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.36.1
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.47.0
 	k8s.io/api v0.34.0
 	k8s.io/apimachinery v0.34.0

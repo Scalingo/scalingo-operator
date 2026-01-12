@@ -1,0 +1,9 @@
+{
+  "base_package": "github.com/Scalingo/scalingo-operator",
+  "mocks": [
+    {
+      "interface": "Client",
+      "src_package": "internal/boundaries/out/scalingo"
+    }
+  ]
+}
