@@ -16,8 +16,11 @@ Dockerfile.cross
 # Go workspace file
 go.work
 
-# Kubernetes Generated files - skip generated files, except for vendored files
+# Kubernetes generated files - skip generated files, except for vendored files
 !vendor/**/zz_generated.*
+
+# Kubebuilder generated files
+dist
 
 # editor and IDE paraphernalia
 .idea
