@@ -9,7 +9,7 @@ import (
 const DatabaseAnnotationIsRunning = "databases.scalingo.com/db-is-running"
 
 // Helper functions to read and modify operator status through its
-// Meta data: annotations and statuts conditions.
+// Meta data: annotations and status conditions.
 
 func IsDatabaseRunning(dbMeta metav1.ObjectMeta) bool {
 	return metav1.HasAnnotation(dbMeta, DatabaseAnnotationIsRunning) &&

@@ -13,13 +13,13 @@ import (
 )
 
 type SecretManager struct {
-	client             client.Client
+	k8sClient          client.Client
 	databaseMetaObject metav1.Object
 }
 
-func NewSecretManager(client client.Client, databaseMetaObject metav1.Object) *SecretManager {
+func NewSecretManager(k8sClient client.Client, databaseMetaObject metav1.Object) *SecretManager {
 	return &SecretManager{
-		client:             client,
+		k8sClient:          k8sClient,
 		databaseMetaObject: databaseMetaObject,
 	}
 }
@@ -36,7 +36,7 @@ func (m SecretManager) GetSecret(ctx context.Context, secret domain.Secret) (str
 	}
 
 	coreSecret := &corev1.Secret{}
-	err := m.client.Get(ctx, client.ObjectKey{Namespace: secret.Namespace, Name: secret.Name}, coreSecret)
+	err := m.k8sClient.Get(ctx, client.ObjectKey{Namespace: secret.Namespace, Name: secret.Name}, coreSecret)
 	if err != nil {
 		return "", errors.Wrap(ctx, err, "get auth secret")
 	}
@@ -68,14 +68,14 @@ func (m SecretManager) SetSecret(ctx context.Context, secret domain.Secret) erro
 		},
 	}
 
-	_, err := controllerutil.CreateOrUpdate(ctx, m.client, coreSecret, func() error {
+	_, err := controllerutil.CreateOrUpdate(ctx, m.k8sClient, coreSecret, func() error {
 		if coreSecret.Data == nil {
 			coreSecret.Data = make(map[string][]byte)
 		}
 
 		coreSecret.Data[secret.Key] = []byte(secret.Value)
 
-		err := controllerutil.SetControllerReference(m.databaseMetaObject, coreSecret, m.client.Scheme())
+		err := controllerutil.SetControllerReference(m.databaseMetaObject, coreSecret, m.k8sClient.Scheme())
 		if err != nil {
 			return errors.Wrap(ctx, err, "set controller reference on secret")
 		}
