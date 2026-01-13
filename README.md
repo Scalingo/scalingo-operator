@@ -281,6 +281,7 @@ Commit, tag and create a new release:
 ```sh
 VERSION="1.0.0-alpha1"
 
+git switch --create release/${VERSION}
 git add CHANGELOG.md README.md
 git commit --message="feat: bump v${VERSION}"
 git push --set-upstream origin release/${VERSION}
