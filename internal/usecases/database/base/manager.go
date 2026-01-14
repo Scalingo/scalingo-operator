@@ -19,10 +19,10 @@ type manager struct {
 func NewManager(ctx context.Context, dbType domain.DatabaseType, apiToken, region string) (database.Manager, error) {
 	err := dbType.Validate()
 	if err != nil {
-		return nil, errors.Newf(ctx, "new manager: %v", err)
+		return nil, errors.Wrap(ctx, err, "new manager")
 	}
 	if apiToken == "" {
-		return nil, errors.New(ctx, "empty apitoken")
+		return nil, errors.New(ctx, "empty api token")
 	}
 
 	scClient, err := scalingobase.NewClient(ctx, apiToken, region)
@@ -67,6 +67,7 @@ func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domai
 func (m *manager) UpdateDatabase(ctx context.Context, currentDB, expectedDB domain.Database) (domain.Database, error) {
 	return domain.Database{}, domain.ErrNotImplemented
 }
+
 func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {
 	if dbID == "" {
 		return errors.New(ctx, "empty database id")
@@ -79,7 +80,7 @@ func toDatabaseTypeName(ctx context.Context, dbType domain.DatabaseType) (string
 	case domain.DatabaseTypePostgreSQL:
 		return "POSTGRESQL", nil
 	default:
-		return "", errors.Newf(ctx, "no matching type for %s", dbType)
+		return "", errors.Newf(ctx, "no matching type for %q", dbType)
 	}
 
 }
