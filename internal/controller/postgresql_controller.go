@@ -79,7 +79,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		helpers.SetDatabaseInitialState(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
 		err := r.Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "set intial state")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "set initial state")
 		}
 	}
 

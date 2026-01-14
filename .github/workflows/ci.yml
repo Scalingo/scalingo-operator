@@ -17,3 +17,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: Scalingo/actions/go-linter@main
+
+  tests:
+    name: Unit Tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: Scalingo/actions/go-tests@main
