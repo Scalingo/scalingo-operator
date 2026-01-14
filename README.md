@@ -296,3 +296,13 @@ git push origin main v${VERSION}
 
 After tagging the branch, the process to release the archive with the installer is automatically handled by GitHub Actions. The release will be published
 on the [Scalingo Operator](https://github.com/Scalingo/scalingo-operator/releases) page.
+
+# Integration Tests
+
+Integration tests are minimal and remain in progress.
+
+Execute with:
+
+```sh
+go test -tag integration ./...
+```
