@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,7 +17,7 @@ func TestNewSecretManager(t *testing.T) {
 }
 
 func TestSecretManager_GetSecret_Validation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	manager := NewSecretManager(nil, nil)
 
 	t.Run("returns error when namespace is empty", func(t *testing.T) {
@@ -65,7 +64,7 @@ func TestSecretManager_GetSecret_Validation(t *testing.T) {
 }
 
 func TestSecretManager_SetSecret_Validation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	manager := NewSecretManager(nil, nil)
 
 	t.Run("returns error when namespace is empty", func(t *testing.T) {

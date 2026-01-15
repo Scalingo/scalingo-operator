@@ -182,11 +182,13 @@ func TestSetDatabaseStatusProvisioned(t *testing.T) {
 
 		SetDatabaseStatusProvisioned(dbMeta, conditions)
 
+		require.Len(t, *conditions, 2)
 		for _, cond := range *conditions {
 			if cond.Type == string(DatabaseStatusConditionAvailable) {
 				require.Equal(t, reasonAvailable, cond.Reason)
 				require.Equal(t, msgAvailable, cond.Message)
-			} else if cond.Type == string(DatabaseStatusConditionProvisioning) {
+			} else {
+				require.Equal(t, string(DatabaseStatusConditionProvisioning), cond.Type)
 				require.Equal(t, reasonProvisioned, cond.Reason)
 				require.Equal(t, msgProvisioned, cond.Message)
 			}
