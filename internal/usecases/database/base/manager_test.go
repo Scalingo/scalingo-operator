@@ -216,5 +216,4 @@ func TestToDatabaseTypeName(t *testing.T) {
 		require.EqualError(t, err, "new manager: invalid database type: invalid_db_type")
 		require.Nil(t, dbManager)
 	})
-
 }
