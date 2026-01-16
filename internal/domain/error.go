@@ -3,7 +3,6 @@ package domain
 import "errors"
 
 var (
-	ErrNotImplemented = errors.New("not implemented") // TODO(david): remove before first Prod release
-
+	ErrNotImplemented   = errors.New("not implemented")
 	ErrDatabaseNotFound = errors.New("database not found")
 )

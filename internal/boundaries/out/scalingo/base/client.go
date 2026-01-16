@@ -20,7 +20,7 @@ type client struct {
 
 func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, error) {
 	if apiToken == "" {
-		return nil, errors.New(ctx, "empty token")
+		return nil, errors.New(ctx, "empty api token")
 	}
 
 	cfg := scalingoapi.ClientConfig{

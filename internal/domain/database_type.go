@@ -5,7 +5,7 @@ import "fmt"
 type DatabaseType string
 
 const (
-	DatabaseTypeEmpty                   = "" // Freshly created databases have no type defined
+	DatabaseTypeEmpty      DatabaseType = "" // Freshly created databases have no type defined
 	DatabaseTypePostgreSQL DatabaseType = "postgresql"
 )
 
