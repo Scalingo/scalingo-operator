@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   push-image:
-    name: Push the Docker Image
+    name: Push the Docker image
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -22,5 +22,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push the Docker image
+        run: |
+          make docker-build IMG=scalingo/scalingo-operator:test
+
 
       
