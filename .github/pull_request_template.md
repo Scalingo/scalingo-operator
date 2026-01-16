@@ -1,0 +1,1 @@
+- [ ] New changes are added to the `To Be Released` section of the CHANGELOG
