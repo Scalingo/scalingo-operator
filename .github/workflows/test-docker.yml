@@ -26,6 +26,4 @@ jobs:
       - name: Build and push the Docker image
         run: |
           make docker-build IMG=scalingo/scalingo-operator:test
-
-
-      
+          make docker-buildx IMG=scalingo/scalingo-operator:testx
