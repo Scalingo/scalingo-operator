@@ -73,6 +73,7 @@ func toDatabaseStatus(status scalingoapi.DatabaseStatus) domain.DatabaseStatus {
 		return domain.DatabaseStatusSuspended
 	}
 }
+
 func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database, error) {
 	dbType := domain.DatabaseType(db.Database.TypeName)
 	err := dbType.Validate()
