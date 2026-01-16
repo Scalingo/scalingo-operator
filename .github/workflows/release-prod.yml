@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   create_release:
+    needs: [tests]
     name: Create GitHub Release
     if: ${{ github.ref_type == 'tag' }}
     runs-on: ubuntu-24.04
