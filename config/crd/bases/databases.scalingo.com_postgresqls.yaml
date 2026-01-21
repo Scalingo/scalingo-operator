@@ -40,8 +40,8 @@ spec:
             description: spec defines the desired state of PostgreSQL
             properties:
               authSecret:
-                description: Auth contains the references to the authentication details
-                  needed to connect to Scalingo.
+                description: AuthSecret contains the references to the authentication
+                  details needed to connect to Scalingo.
                 properties:
                   key:
                     default: token
@@ -58,6 +58,8 @@ spec:
                 - name
                 type: object
               connInfoSecretTarget:
+                description: ConnInfoSecretTarget defines where to store the connection
+                  information secret.
                 properties:
                   name:
                     description: The name of the secret to create or update with the
@@ -75,9 +77,50 @@ spec:
                 type: object
               name:
                 description: Name is the name of the PostgreSQL database to create
-                  on Scalingo.
+                  on Scalingo
                 minLength: 5
                 type: string
+              networking:
+                description: Network defines the networking configuration.
+                properties:
+                  firewall:
+                    description: Firewall defines the firewall rules.
+                    properties:
+                      rules:
+                        description: Rules is a list of firewall rules to be applied.
+                        items:
+                          properties:
+                            cidr:
+                              description: CIDR is the IP range in CIDR notation for
+                                "custom_range" type rules.
+                              pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$
+                              type: string
+                            label:
+                              description: Label is an optional label for the firewall
+                                rule.
+                              minLength: 5
+                              type: string
+                            range_id:
+                              description: RangeID is the identifier of the managed
+                                range for "managed_range" type rules.
+                              minLength: 5
+                              type: string
+                            type:
+                              description: 'Type of the firewall rule: custom or managed
+                                range.'
+                              enum:
+                              - custom_range
+                              - managed_range
+                              type: string
+                          required:
+                          - type
+                          type: object
+                        minItems: 1
+                        type: array
+                    required:
+                    - rules
+                    type: object
+                type: object
               plan:
                 description: Plan is the plan to use for the PostgreSQL database.
                 minLength: 10
@@ -91,6 +134,7 @@ spec:
                 default: osc-fr1
                 description: Region is the Scalingo region where the PostgreSQL database
                   will be created.
+                minLength: 5
                 type: string
             required:
             - authSecret

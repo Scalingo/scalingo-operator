@@ -100,11 +100,14 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, errors.Wrap(ctx, err, "create database manager")
 	}
 
-	expectedDB := adapters.PostgreSQLToDatabase(postgresql)
+	expectedDB, err := adapters.PostgreSQLToDatabase(ctx, postgresql)
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(ctx, err, "bad custom resource format")
+	}
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
-	IsDatabaseProvisioning := helpers.IsDatabaseProvisioning(postgresql.Status.Conditions)
+	isDatabaseProvisioning := helpers.IsDatabaseProvisioning(postgresql.Status.Conditions)
 	requeue := false
 
 	log.Info("Current state",
@@ -112,25 +115,25 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		"running", isDatabaseRunning,
 		"deletion_requested", isDatabaseDeletionRequested,
 		"available", isDatabaseAvailable,
-		"provisioning", IsDatabaseProvisioning)
+		"provisioning", isDatabaseProvisioning)
 
 	if isDatabaseDeletionRequested {
 		// Delete database.
-		log.Info("Delete database")
+		log.Info("Delete database resource")
 
 		err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
 		}
 		controllerutil.RemoveFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
-	} else if !isDatabaseRunning && postgresql.Status.ScalingoDatabaseID == "" {
+	} else if !isDatabaseAvailable && postgresql.Status.ScalingoDatabaseID == "" {
 		// Create database.
-		log.Info("Create database")
+		log.Info("Create database resource")
 
 		newDB, err := dbManager.CreateDatabase(ctx, expectedDB)
 		if err != nil {
 			log.Error(err, "Create database", "database", expectedDB)
-			return ctrl.Result{}, errors.Wrapf(ctx, err, "create database with name %s", expectedDB.Name)
+			return ctrl.Result{}, errors.Wrapf(ctx, err, "create database %s", expectedDB.Name)
 		}
 
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
@@ -142,7 +145,24 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		requeue = true
-	} else if postgresql.Status.ScalingoDatabaseID != "" {
+
+	} else if isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "" {
+		// Update database.
+		log.Info("Update database resource")
+
+		err = dbManager.UpdateDatabase(ctx, postgresql.Status.ScalingoDatabaseID, expectedDB)
+		if err != nil {
+			log.Error(err, "Update database", "database", expectedDB)
+			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s", expectedDB.Name)
+		}
+
+		helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
+
+		err = r.Status().Update(ctx, &postgresql)
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
+		}
+	} else if isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "" {
 		// Wait for database creation.
 		currentDB, err := dbManager.GetDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
 		if err != nil {
