@@ -14,23 +14,24 @@ import (
 func (m *manager) updateFirewallRules(ctx context.Context, currentDB domain.Database, expectedRules []domain.FirewallRule) error {
 	log := logf.FromContext(ctx)
 
-	nbRules := len(expectedRules)
-	if nbRules == 0 {
-		log.Info("No firewall rule to create")
+	// TODO: apply a diff to gather: 1/ rules to delete, 2/ rules to add, then apply these diff rules.
+	// 			-> this will ensure firewall rules application idem potency.
+	//
+	// Actually, rules are added only once, right after DB creation.
+
+	if len(currentDB.FireWallRules) != 0 {
+		log.Info("Firewall rules already created, nothing to do")
 		return nil
 	}
-
-	// TODO: apply a diff to gather: 1/ rules to delete, 2/ rules to add, 3/ rules to update (label)
 
 	g, ctx := errgroup.WithContext(ctx)
 	for _, rule := range expectedRules {
 		g.Go(func() error {
-			// Remark: DB ID is the app ID for DBNG.
 			err := m.scClient.CreateFirewallRule(ctx, currentDB.ID, currentDB.AddonID, rule)
 			if err == nil {
-				log.Info("Created firewall rule", "rule", rule)
+				log.Info("Add firewall rule", "rule", rule)
 			} else {
-				log.Error(err, "Fail to create firewall rule", "AppID", currentDB.ID, "AddonID", currentDB.AddonID, "rule", rule)
+				log.Error(err, "Fail to add firewall rule", "AppID", currentDB.ID, "AddonID", currentDB.AddonID, "rule", rule)
 			}
 			return err
 		})
@@ -41,8 +42,4 @@ func (m *manager) updateFirewallRules(ctx context.Context, currentDB domain.Data
 		return errors.Wrap(ctx, err, "update firewall rules")
 	}
 	return nil
-}
-
-func (m *manager) deleteFirewallRules(ctx context.Context, dbID string) error {
-	return domain.ErrNotImplemented
 }

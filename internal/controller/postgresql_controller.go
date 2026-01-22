@@ -156,8 +156,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s", expectedDB.Name)
 		}
 
-		helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
-
 		err = r.Status().Update(ctx, &postgresql)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")

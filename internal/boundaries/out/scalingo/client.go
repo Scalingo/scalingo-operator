@@ -15,9 +15,8 @@ type Client interface {
 	DeleteDatabase(ctx context.Context, dbID string) error
 
 	// Firewall.
-	CreateFirewallRule(ctx context.Context, appID, addonID string, rule domain.FirewallRule) error
-	ListFirewallRules(ctx context.Context, appID, addonID string) ([]domain.FirewallRule, error)
-	DeleteFirewallRule(ctx context.Context, appID, addonID, firewallRuleID string) error
+	CreateFirewallRule(ctx context.Context, dbID, addonID string, rule domain.FirewallRule) error
+	ListFirewallRules(ctx context.Context, dbID, addonID string) ([]domain.FirewallRule, error)
 
 	// Application.
 	FindApplicationVariable(ctx context.Context, appID, varName string) (string, error)

@@ -13,6 +13,7 @@ import (
 const (
 	databaseID = "db_test_id"
 	appID      = "app_test_id"
+	addonID    = "addon_test_id"
 )
 
 func TestNewManager(t *testing.T) {
@@ -85,16 +86,19 @@ func TestManager_GetDatabase(t *testing.T) {
 		}
 
 		db := domain.Database{
-			ID:   databaseID,
-			Name: "PG test",
-			Type: domain.DatabaseTypePostgreSQL,
-			Plan: "postgresql-ng-enterprise-4096",
+			ID:      databaseID,
+			AddonID: addonID,
+			Name:    "PG test",
+			Type:    domain.DatabaseTypePostgreSQL,
+			Plan:    "postgresql-ng-enterprise-4096",
 		}
 
 		scClient.EXPECT().GetDatabase(ctx, databaseID).Return(db, nil)
+		scClient.EXPECT().ListFirewallRules(ctx, databaseID, addonID)
 
 		// When
 		res, err := manager.GetDatabase(ctx, databaseID)
+
 		// Then
 		require.NoError(t, err)
 		require.Equal(t, db, res)

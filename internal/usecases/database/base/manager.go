@@ -86,10 +86,6 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 	if err != nil {
 		return errors.Wrapf(ctx, err, "unreachable database %s", dbID)
 	}
-	if len(currentDB.FireWallRules) != 0 {
-		// TODO: by waiting for further implementation, allow creation only
-		return errors.Wrap(ctx, domain.ErrNotImplemented, "can not modify existing rules")
-	}
 
 	return m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
 }
@@ -102,11 +98,6 @@ func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {
 	err := m.scClient.DeleteDatabase(ctx, dbID)
 	if err != nil {
 		return errors.Wrapf(ctx, err, "delete database %v", dbID)
-	}
-
-	err = m.deleteFirewallRules(ctx, dbID)
-	if err != nil {
-		return errors.Wrapf(ctx, err, "delete database %v firewall rules", dbID)
 	}
 	return nil
 }

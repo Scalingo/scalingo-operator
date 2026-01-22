@@ -9,8 +9,8 @@ import (
 	scalingoapi "github.com/Scalingo/go-scalingo/v9"
 )
 
-func (c *client) CreateFirewallRule(ctx context.Context, appID, addonID string, rule domain.FirewallRule) error {
-	_, err := c.scClient.Preview().FirewallRulesCreate(ctx, appID, addonID, scalingoapi.FirewallRuleCreateParams{
+func (c *client) CreateFirewallRule(ctx context.Context, dbID, addonID string, rule domain.FirewallRule) error {
+	_, err := c.scClient.Preview().FirewallRulesCreate(ctx, dbID, addonID, scalingoapi.FirewallRuleCreateParams{
 		Type:    toScalingoFirewallRuleType(rule.Type),
 		CIDR:    rule.CIDR,
 		Label:   rule.Label,
@@ -22,8 +22,8 @@ func (c *client) CreateFirewallRule(ctx context.Context, appID, addonID string, 
 	return nil
 }
 
-func (c *client) ListFirewallRules(ctx context.Context, appID, addonID string) ([]domain.FirewallRule, error) {
-	scalingoRules, err := c.scClient.Preview().FirewallRulesList(ctx, appID, addonID)
+func (c *client) ListFirewallRules(ctx context.Context, dbID, addonID string) ([]domain.FirewallRule, error) {
+	scalingoRules, err := c.scClient.Preview().FirewallRulesList(ctx, dbID, addonID)
 	if err != nil {
 		return []domain.FirewallRule{}, errors.Wrap(ctx, err, "list firewall rules")
 	}
@@ -33,14 +33,6 @@ func (c *client) ListFirewallRules(ctx context.Context, appID, addonID string) (
 		rules = append(rules, toFirewallRule(scalingoRule))
 	}
 	return rules, nil
-}
-
-func (c *client) DeleteFirewallRule(ctx context.Context, appID, addonID, firewallRuleID string) error {
-	err := c.scClient.Preview().FirewallRulesDestroy(ctx, appID, addonID, firewallRuleID)
-	if err != nil {
-		return errors.Wrap(ctx, err, "delete firewall rule")
-	}
-	return nil
 }
 
 func toFirewallRule(rule scalingoapi.FirewallRule) domain.FirewallRule {
