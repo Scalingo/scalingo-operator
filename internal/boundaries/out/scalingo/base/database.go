@@ -96,7 +96,6 @@ func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
 
 func toDatabaseStatus(status scalingoapi.DatabaseStatus) domain.DatabaseStatus {
 	switch status {
-
 	case scalingoapi.DatabaseStatusCreating, scalingoapi.DatabaseStatusUpdating,
 		scalingoapi.DatabaseStatusMigrating, scalingoapi.DatabaseStatusUpgrading:
 		return domain.DatabaseStatusProvisioning
