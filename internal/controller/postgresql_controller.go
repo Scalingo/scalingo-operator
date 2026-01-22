@@ -145,7 +145,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 		requeue = true
-
 	} else if isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "" {
 		// Update database.
 		log.Info("Update database resource")
