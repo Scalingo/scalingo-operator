@@ -7,8 +7,10 @@ type DatabaseStatus string
 const (
 	DatabaseStatusRunning      DatabaseStatus = "running"
 	DatabaseStatusProvisioning DatabaseStatus = "provisioning"
-	DatabaseStatusSuspended    DatabaseStatus = "suspended"
+	DatabaseStatusStopped    DatabaseStatus = "stopped"
 )
+	DatabaseStatusUnknown    DatabaseStatus = "unknown"
+
 
 func (s DatabaseStatus) Validate() error {
 	switch s {

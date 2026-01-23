@@ -25,8 +25,9 @@ func TestToFirewallRule(t *testing.T) {
 			Label: "custom-label",
 		}
 
-		result := toFirewallRule(scalingoRule)
+		result, err := toFirewallRule(t.Context(), scalingoRule)
 
+		require.NoError(t, err)
 		require.Equal(t, expected, result)
 	})
 
@@ -45,16 +46,31 @@ func TestToFirewallRule(t *testing.T) {
 			RangeID: "range-789",
 		}
 
-		result := toFirewallRule(scalingoRule)
+		result, err := toFirewallRule(t.Context(), scalingoRule)
 
+		require.NoError(t, err)
 		require.Equal(t, expected, result)
+	})
+
+	t.Run("it fails converting firewall rule with unknown range", func(t *testing.T) {
+		scalingoRule := scalingoapi.FirewallRule{
+			ID:    "rule-123",
+			Type:  scalingoapi.FirewallRuleType("new unknown range"),
+			CIDR:  "10.0.0.0/8",
+			Label: "custom-label",
+		}
+
+		_, err := toFirewallRule(t.Context(), scalingoRule)
+
+		require.ErrorContains(t, err, "to firewall rule type: invalid type new unknown range")
 	})
 }
 
 func TestToFirewallRuleType(t *testing.T) {
 	tests := map[string]struct {
-		scalingoType scalingoapi.FirewallRuleType
-		expectedType domain.FirewallRuleType
+		scalingoType  scalingoapi.FirewallRuleType
+		expectedType  domain.FirewallRuleType
+		expectedError string
 	}{
 		"it converts managed range type": {
 			scalingoType: scalingoapi.FirewallRuleTypeManagedRange,
@@ -64,24 +80,31 @@ func TestToFirewallRuleType(t *testing.T) {
 			scalingoType: scalingoapi.FirewallRuleTypeCustomRange,
 			expectedType: domain.FirewallRuleTypeCustomRange,
 		},
-		"it defaults to custom range for unknown type": {
-			scalingoType: "unknown",
-			expectedType: domain.FirewallRuleTypeCustomRange,
+		"it fails for unknown range type": {
+			scalingoType:  "UNKNOWN",
+			expectedError: "invalid type UNKNOWN",
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			result := toFirewallRuleType(test.scalingoType)
-			require.Equal(t, test.expectedType, result)
+			result, err := toFirewallRuleType(t.Context(), test.scalingoType)
+
+			if test.expectedError != "" {
+				require.ErrorContains(t, err, test.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, test.expectedType, result)
+			}
 		})
 	}
 }
 
 func TestToScalingoFirewallRuleType(t *testing.T) {
 	tests := map[string]struct {
-		domainType   domain.FirewallRuleType
-		expectedType scalingoapi.FirewallRuleType
+		domainType    domain.FirewallRuleType
+		expectedType  scalingoapi.FirewallRuleType
+		expectedError string
 	}{
 		"it converts managed range type": {
 			domainType:   domain.FirewallRuleTypeManagedRange,
@@ -91,16 +114,21 @@ func TestToScalingoFirewallRuleType(t *testing.T) {
 			domainType:   domain.FirewallRuleTypeCustomRange,
 			expectedType: scalingoapi.FirewallRuleTypeCustomRange,
 		},
-		"it defaults to custom range for unknown type": {
-			domainType:   "unknown",
-			expectedType: scalingoapi.FirewallRuleTypeCustomRange,
+		"it fails for unknown range type": {
+			domainType:    "UNKNOWN",
+			expectedError: "invalid type UNKNOWN",
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			result := toScalingoFirewallRuleType(test.domainType)
-			require.Equal(t, test.expectedType, result)
+			result, err := toScalingoFirewallRuleType(t.Context(), test.domainType)
+			if test.expectedError != "" {
+				require.ErrorContains(t, err, test.expectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, test.expectedType, result)
+			}
 		})
 	}
 }
