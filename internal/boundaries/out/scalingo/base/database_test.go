@@ -78,11 +78,10 @@ func TestToDatabase(t *testing.T) {
 		ctx := t.Context()
 
 		const (
-			dbID    = "db_id"
-			dbName  = "db_name"
-			dbPlan  = "db_plan_name"
-			appID   = "app_id"
-			appName = "app_name"
+			dbID   = "db_id"
+			dbName = "db_name"
+			dbPlan = "db_plan_name"
+			appID  = "app_id"
 		)
 
 		db := scalingoapi.DatabaseNG{
@@ -94,15 +93,14 @@ func TestToDatabase(t *testing.T) {
 				Status:   scalingoapi.DatabaseStatusRunning,
 			},
 			App: scalingoapi.App{
-				ID:   appID,
-				Name: appName,
+				ID: appID,
 			},
 		}
 
 		expectedDB := domain.Database{
 			ID:     dbID,
 			AppID:  appID,
-			Name:   appName,
+			Name:   dbName,
 			Type:   domain.DatabaseTypePostgreSQL,
 			Status: domain.DatabaseStatusRunning,
 			Plan:   dbPlan,

@@ -116,10 +116,10 @@ func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 	return domain.Database{
 		ID:        db.ID,
 		AppID:     db.App.ID,
-		Name:      db.App.Name,
+		Name:      db.Name,
 		Type:      dbType,
 		Status:    toDatabaseStatus(db.Database.Status),
 		Plan:      db.Plan,
-		ProjectID: db.App.Project.ID,
+		ProjectID: db.ProjectID,
 	}, nil
 }
