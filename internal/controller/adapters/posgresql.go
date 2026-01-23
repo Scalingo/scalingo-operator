@@ -13,7 +13,7 @@ import (
 func PostgreSQLToDatabase(ctx context.Context, postgresql apiv1alpha1.PostgreSQL) (domain.Database, error) {
 	rules, err := toFirewallRules(ctx, postgresql.Spec.Networking)
 	if err != nil {
-		return domain.Database{}, errors.Wrap(ctx, err, "to database")
+		return domain.Database{}, errors.Wrap(ctx, err, "to firewall rules")
 	}
 
 	return domain.Database{
