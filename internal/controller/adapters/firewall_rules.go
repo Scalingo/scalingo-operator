@@ -34,7 +34,7 @@ func toFirewallRule(ctx context.Context, rule v1alpha1.FirewallRuleSpec) (domain
 
 	err := newRule.Validate()
 	if err != nil {
-		return domain.FirewallRule{}, errors.Wrap(ctx, err, "bad firewall rule")
+		return domain.FirewallRule{}, errors.Wrap(ctx, err, "validate firewall rule")
 	}
 	return newRule, nil
 }
