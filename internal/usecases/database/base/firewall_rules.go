@@ -15,7 +15,7 @@ func (m *manager) updateFirewallRules(ctx context.Context, currentDB domain.Data
 	log := logf.FromContext(ctx)
 
 	// TODO: apply a diff to gather: 1/ rules to delete, 2/ rules to add, then apply these diff rules.
-	// 			-> this will ensure firewall rules application idem potency.
+	// 			-> this will ensure firewall rules application idempotency.
 	//
 	// Actually, rules are added only once, right after DB creation.
 
