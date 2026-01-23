@@ -30,7 +30,7 @@ func (t FirewallRuleType) Validate() error {
 }
 
 func (r FirewallRule) String() string {
-	return fmt.Sprintf("{ ID: %s, Type: %s, CIDR: %s, Label: %s, RangeID: %s }",
+	return fmt.Sprintf("{ ID: '%s', Type: %s, CIDR: '%s', Label: '%s', RangeID: '%s' }",
 		r.ID,
 		r.Type,
 		r.CIDR,

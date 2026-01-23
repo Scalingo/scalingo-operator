@@ -33,13 +33,13 @@ func TestFirewallRule_String(t *testing.T) {
 			Label:   "Test Rule",
 			RangeID: "range-456",
 		}
-		expected := "{ ID: rule-123, Type: managed_range, CIDR: 192.168.1.0/24, Label: Test Rule, RangeID: range-456 }"
+		expected := "{ ID: 'rule-123', Type: managed_range, CIDR: '192.168.1.0/24', Label: 'Test Rule', RangeID: 'range-456' }"
 		require.Equal(t, expected, rule.String())
 	})
 
 	t.Run("it returns string representation with empty fields", func(t *testing.T) {
 		rule := FirewallRule{}
-		expected := "{ ID: , Type: , CIDR: , Label: , RangeID:  }"
+		expected := "{ ID: '', Type: , CIDR: '', Label: '', RangeID: '' }"
 		require.Equal(t, expected, rule.String())
 	})
 }
