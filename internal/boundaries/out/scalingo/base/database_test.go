@@ -45,19 +45,41 @@ func TestToScalingoProviderId(t *testing.T) {
 
 func TestToScalingoStatus(t *testing.T) {
 	t.Run("it results as provisioning status", func(t *testing.T) {
-		require.Equal(t, domain.DatabaseStatusProvisioning, toDatabaseStatus(scalingoapi.DatabaseStatusCreating))
-		require.Equal(t, domain.DatabaseStatusProvisioning, toDatabaseStatus(scalingoapi.DatabaseStatusUpdating))
-		require.Equal(t, domain.DatabaseStatusProvisioning, toDatabaseStatus(scalingoapi.DatabaseStatusMigrating))
-		require.Equal(t, domain.DatabaseStatusProvisioning, toDatabaseStatus(scalingoapi.DatabaseStatusUpgrading))
+		status, err := toDatabaseStatus(scalingoapi.DatabaseStatusCreating)
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
+
+		status, err = toDatabaseStatus(scalingoapi.DatabaseStatusUpdating)
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
+
+		status, err = toDatabaseStatus(scalingoapi.DatabaseStatusMigrating)
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
+
+		status, err = toDatabaseStatus(scalingoapi.DatabaseStatusUpgrading)
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
 	})
 
 	t.Run("it results as running status", func(t *testing.T) {
-		require.Equal(t, domain.DatabaseStatusRunning, toDatabaseStatus(scalingoapi.DatabaseStatusRunning))
+		status, err := toDatabaseStatus(scalingoapi.DatabaseStatusRunning)
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusRunning, status)
 	})
 
-	t.Run("it falls back on suspended status for unknow API status", func(t *testing.T) {
-		require.Equal(t, domain.DatabaseStatusSuspended, toDatabaseStatus(""))
-		require.Equal(t, domain.DatabaseStatusSuspended, toDatabaseStatus("unknown"))
+	t.Run("it results as stopped status", func(t *testing.T) {
+		status, err := toDatabaseStatus(scalingoapi.DatabaseStatusStopped)
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusStopped, status)
+	})
+
+	t.Run("it returns error for unknown API status", func(t *testing.T) {
+		_, err := toDatabaseStatus("")
+		require.ErrorContains(t, err, "unknown database status")
+
+		_, err = toDatabaseStatus("whatever")
+		require.ErrorContains(t, err, "unknown database status")
 	})
 }
 

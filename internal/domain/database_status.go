@@ -7,14 +7,12 @@ type DatabaseStatus string
 const (
 	DatabaseStatusRunning      DatabaseStatus = "running"
 	DatabaseStatusProvisioning DatabaseStatus = "provisioning"
-	DatabaseStatusStopped    DatabaseStatus = "stopped"
+	DatabaseStatusStopped      DatabaseStatus = "stopped"
 )
-	DatabaseStatusUnknown    DatabaseStatus = "unknown"
-
 
 func (s DatabaseStatus) Validate() error {
 	switch s {
-	case DatabaseStatusRunning, DatabaseStatusProvisioning, DatabaseStatusSuspended:
+	case DatabaseStatusRunning, DatabaseStatusProvisioning, DatabaseStatusStopped:
 		return nil
 	default:
 		return fmt.Errorf("invalid database status: %s", s)

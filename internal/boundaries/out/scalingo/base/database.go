@@ -94,15 +94,17 @@ func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
 	}
 }
 
-func toDatabaseStatus(status scalingoapi.DatabaseStatus) domain.DatabaseStatus {
+func toDatabaseStatus(status scalingoapi.DatabaseStatus) (domain.DatabaseStatus, error) {
 	switch status {
 	case scalingoapi.DatabaseStatusCreating, scalingoapi.DatabaseStatusUpdating,
 		scalingoapi.DatabaseStatusMigrating, scalingoapi.DatabaseStatusUpgrading:
-		return domain.DatabaseStatusProvisioning
+		return domain.DatabaseStatusProvisioning, nil
 	case scalingoapi.DatabaseStatusRunning:
-		return domain.DatabaseStatusRunning
+		return domain.DatabaseStatusRunning, nil
+	case scalingoapi.DatabaseStatusStopped:
+		return domain.DatabaseStatusStopped, nil
 	default:
-		return domain.DatabaseStatusSuspended
+		return domain.DatabaseStatus(""), fmt.Errorf("unknown database status %v", status)
 	}
 }
 
@@ -110,7 +112,12 @@ func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 	dbType := domain.DatabaseType(db.Database.TypeName)
 	err := dbType.Validate()
 	if err != nil {
-		return domain.Database{}, errors.Wrap(ctx, err, "to database")
+		return domain.Database{}, errors.Wrap(ctx, err, "to database type")
+	}
+
+	dbStatus, err := toDatabaseStatus(db.Database.Status)
+	if err != nil {
+		return domain.Database{}, errors.Wrap(ctx, err, "to database status")
 	}
 
 	return domain.Database{
@@ -118,7 +125,7 @@ func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 		AppID:     db.App.ID,
 		Name:      db.Name,
 		Type:      dbType,
-		Status:    toDatabaseStatus(db.Database.Status),
+		Status:    dbStatus,
 		Plan:      db.Plan,
 		ProjectID: db.ProjectID,
 	}, nil
