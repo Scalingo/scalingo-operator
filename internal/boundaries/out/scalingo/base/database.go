@@ -51,7 +51,10 @@ func (c *client) GetDatabase(ctx context.Context, dbID string) (domain.Database,
 	return db, nil
 }
 
-// Shamelessly taken from `cli` project.
+// getAddonIDFromDatabase resolves the addon ID from a database name by calling the API.
+//
+// Shamelessly taken from `cli` project:
+// https://github.com/Scalingo/cli/blob/093b3f099210a9f1a5a1bab49980b94576c299b9/detect/app.go#L23
 func (c *client) getAddonIDFromDatabase(ctx context.Context, databaseName string) (string, error) {
 	// AddonsList works for both apps and DBNG databases (same API endpoint).
 	// A DBNG database is modeled as an app with a single addon (itself),
