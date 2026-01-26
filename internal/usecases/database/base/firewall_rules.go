@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"slices"
 
 	"golang.org/x/sync/errgroup"
 
@@ -42,4 +43,35 @@ func (m *manager) updateFirewallRules(ctx context.Context, currentDB domain.Data
 		return errors.Wrap(ctx, err, "update firewall rules")
 	}
 	return nil
+}
+
+type rulesDiff struct {
+	newRules []domain.FirewallRule
+	oldRules []domain.FirewallRule
+}
+
+// extractRulesDiff compares two FirewallRule slices and returns their differential.
+func extractRulesDiff(currentRules []domain.FirewallRule, expectedRules []domain.FirewallRule) rulesDiff {
+	// Sort slices to further use BinarySearchFunc.
+	slices.SortFunc(currentRules, domain.CompareFirewallRules)
+	slices.SortFunc(expectedRules, domain.CompareFirewallRules)
+
+	res := rulesDiff{
+		newRules: make([]domain.FirewallRule, 0, len(expectedRules)),
+		oldRules: make([]domain.FirewallRule, 0, len(currentRules)),
+	}
+
+	for _, rule := range expectedRules {
+		_, found := slices.BinarySearchFunc(currentRules, rule, domain.CompareFirewallRules)
+		if !found {
+			res.newRules = append(res.newRules, rule)
+		}
+	}
+	for _, rule := range currentRules {
+		_, found := slices.BinarySearchFunc(expectedRules, rule, domain.CompareFirewallRules)
+		if !found {
+			res.oldRules = append(res.oldRules, rule)
+		}
+	}
+	return res
 }

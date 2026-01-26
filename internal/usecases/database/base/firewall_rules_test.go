@@ -11,7 +11,7 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-func TestManager_UpdateFirewallRules(t *testing.T) {
+func TestManager_updateFirewallRules(t *testing.T) {
 	t.Run("it does nothing when current rules are already created", func(t *testing.T) {
 		// Given
 		ctx := t.Context()
@@ -135,5 +135,37 @@ func TestManager_UpdateFirewallRules(t *testing.T) {
 
 		// Then
 		require.NoError(t, err)
+	})
+}
+
+func TestManager_extractRulesDiff(t *testing.T) {
+	t.Run("it extracts rules differences", func(t *testing.T) {
+		// Given
+		current := []domain.FirewallRule{
+			{Type: domain.FirewallRuleTypeCustomRange, CIDR: "192.168.0.1/24", Label: "first"},
+			{Type: domain.FirewallRuleTypeManagedRange, RangeID: "range-1"},
+		}
+		requested := []domain.FirewallRule{
+			{Type: domain.FirewallRuleTypeManagedRange, RangeID: "range-2"},
+			{Type: domain.FirewallRuleTypeCustomRange, CIDR: "192.168.0.1/24", Label: "redundant"},
+			{Type: domain.FirewallRuleTypeCustomRange, CIDR: "0.0.0.0/0", Label: "all"},
+		}
+
+		expectedDiff := rulesDiff{
+			newRules: []domain.FirewallRule{
+				{Type: domain.FirewallRuleTypeCustomRange, CIDR: "0.0.0.0/0", Label: "all"},
+				{Type: domain.FirewallRuleTypeManagedRange, RangeID: "range-2"},
+			},
+			oldRules: []domain.FirewallRule{
+				{Type: domain.FirewallRuleTypeManagedRange, RangeID: "range-1"},
+			},
+		}
+
+		// When
+		res := extractRulesDiff(current, requested)
+
+		// Then
+		require.ElementsMatch(t, expectedDiff.newRules, res.newRules)
+		require.ElementsMatch(t, expectedDiff.oldRules, res.oldRules)
 	})
 }
