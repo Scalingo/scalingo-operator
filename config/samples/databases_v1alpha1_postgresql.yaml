@@ -13,6 +13,15 @@ spec:
     name: my-postgresql-secret
     prefix: PG
 
+  networking:
+    firewall:
+      rules:
+        - type: "custom_range"
+          cidr: "0.0.0.0/0"
+          label: "My Custom Label"
+        - type: "managed_range"
+          range_id: "range-12345"
+
   name: my-dbng-name
   plan: postgresql-ng-enterprise-4096
   region: osc-fr1

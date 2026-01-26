@@ -30,13 +30,19 @@ type PostgreSQLSpec struct {
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	// Auth contains the references to the authentication details needed to connect to Scalingo.
+	// AuthSecret contains the references to the authentication details needed to connect to Scalingo.
 	// +kubebuilder:validation:Required
 	AuthSecret AuthSecretSpec `json:"authSecret"`
 
+	// ConnInfoSecretTarget defines where to store the connection information secret.
+	// +kubebuilder:validation:Required
 	ConnInfoSecretTarget SecretTargetSpec `json:"connInfoSecretTarget"`
 
-	// Name is the name of the PostgreSQL database to create on Scalingo.
+	// Network defines the networking configuration.
+	// +optional
+	Networking *NetworkingSpec `json:"networking,omitempty"`
+
+	// Name is the name of the PostgreSQL database to create on Scalingo
 	// +kubebuilder:validation:MinLength=5
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
@@ -48,10 +54,12 @@ type PostgreSQLSpec struct {
 
 	// Region is the Scalingo region where the PostgreSQL database will be created.
 	// +kubebuilder:default="osc-fr1"
+	// +kubebuilder:validation:MinLength=5
 	Region string `json:"region"`
 
 	// ProjectID is the Scalingo project ID where the PostgreSQL database will be created.
 	// If not specified, the default project associated with the authentication token will be used.
+	// +optional
 	ProjectID string `json:"projectID,omitempty"`
 }
 

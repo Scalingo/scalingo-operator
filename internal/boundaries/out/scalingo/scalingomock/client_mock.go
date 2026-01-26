@@ -50,6 +50,20 @@ func (mr *MockClientMockRecorder) CreateDatabase(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDatabase", reflect.TypeOf((*MockClient)(nil).CreateDatabase), arg0, arg1)
 }
 
+// CreateFirewallRule mocks base method.
+func (m *MockClient) CreateFirewallRule(arg0 context.Context, arg1, arg2 string, arg3 domain.FirewallRule) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFirewallRule", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateFirewallRule indicates an expected call of CreateFirewallRule.
+func (mr *MockClientMockRecorder) CreateFirewallRule(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFirewallRule", reflect.TypeOf((*MockClient)(nil).CreateFirewallRule), arg0, arg1, arg2, arg3)
+}
+
 // DeleteDatabase mocks base method.
 func (m *MockClient) DeleteDatabase(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
@@ -92,6 +106,21 @@ func (m *MockClient) GetDatabase(arg0 context.Context, arg1 string) (domain.Data
 func (mr *MockClientMockRecorder) GetDatabase(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatabase", reflect.TypeOf((*MockClient)(nil).GetDatabase), arg0, arg1)
+}
+
+// ListFirewallRules mocks base method.
+func (m *MockClient) ListFirewallRules(arg0 context.Context, arg1, arg2 string) ([]domain.FirewallRule, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFirewallRules", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]domain.FirewallRule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListFirewallRules indicates an expected call of ListFirewallRules.
+func (mr *MockClientMockRecorder) ListFirewallRules(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFirewallRules", reflect.TypeOf((*MockClient)(nil).ListFirewallRules), arg0, arg1, arg2)
 }
 
 // UpdateDatabase mocks base method.

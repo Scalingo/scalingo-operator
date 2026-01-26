@@ -30,8 +30,9 @@ func TestPostgreSQLToDatabase(t *testing.T) {
 			Plan:      dbPlan,
 			ProjectID: projectID,
 		}
-		res := PostgreSQLToDatabase(pg)
+		res, err := PostgreSQLToDatabase(t.Context(), pg)
 
+		require.NoError(t, err)
 		require.Equal(t, expected, res)
 	})
 }

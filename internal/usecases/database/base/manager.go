@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
 	errors "github.com/Scalingo/go-utils/errors/v3"
 
 	scalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
@@ -41,10 +43,25 @@ func (m *manager) CreateDatabase(ctx context.Context, db domain.Database) (domai
 }
 
 func (m *manager) GetDatabase(ctx context.Context, dbID string) (domain.Database, error) {
+	log := logf.FromContext(ctx)
+
 	if dbID == "" {
 		return domain.Database{}, errors.New(ctx, "empty database id")
 	}
-	return m.scClient.GetDatabase(ctx, dbID)
+	db, err := m.scClient.GetDatabase(ctx, dbID)
+	if err != nil {
+		return domain.Database{}, errors.Wrapf(ctx, err, "get database %s", dbID)
+	}
+
+	rules, err := m.scClient.ListFirewallRules(ctx, db.ID, db.AddonID)
+	if err != nil {
+		return domain.Database{}, errors.Wrap(ctx, err, "get database firewall rules")
+	}
+
+	db.FireWallRules = rules
+	log.Info("Get database", "database", db)
+
+	return db, nil
 }
 
 func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domain.DatabaseURL, error) {
@@ -64,15 +81,25 @@ func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domai
 	}, nil
 }
 
-func (m *manager) UpdateDatabase(ctx context.Context, currentDB, expectedDB domain.Database) (domain.Database, error) {
-	return domain.Database{}, domain.ErrNotImplemented
+func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) error {
+	currentDB, err := m.GetDatabase(ctx, dbID)
+	if err != nil {
+		return errors.Wrapf(ctx, err, "unreachable database %s", dbID)
+	}
+
+	return m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
 }
 
 func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {
 	if dbID == "" {
 		return errors.New(ctx, "empty database id")
 	}
-	return m.scClient.DeleteDatabase(ctx, dbID)
+
+	err := m.scClient.DeleteDatabase(ctx, dbID)
+	if err != nil {
+		return errors.Wrapf(ctx, err, "delete database %v", dbID)
+	}
+	return nil
 }
 
 func toDatabaseTypeName(ctx context.Context, dbType domain.DatabaseType) (string, error) {
@@ -82,5 +109,4 @@ func toDatabaseTypeName(ctx context.Context, dbType domain.DatabaseType) (string
 	default:
 		return "", errors.Newf(ctx, "no matching type for %q", dbType)
 	}
-
 }
