@@ -12,32 +12,23 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
+// updateFirewallRules adds or delete rules so as to bring the current firewall rules to the expected ones.
 func (m *manager) updateFirewallRules(ctx context.Context, currentDB domain.Database, expectedRules []domain.FirewallRule) error {
-	log := logf.FromContext(ctx)
-
-	// TODO: apply a diff to gather: 1/ rules to delete, 2/ rules to add, then apply these diff rules.
-	// 			-> this will ensure firewall rules application idempotency.
-	//
-	// Actually, rules are added only once, right after DB creation.
-
-	if len(currentDB.FireWallRules) != 0 {
-		log.Info("Firewall rules already created, nothing to do")
-		return nil
-	}
+	rulesToApply := establishRulesToApply(currentDB.FireWallRules, expectedRules)
 
 	g, ctx := errgroup.WithContext(ctx)
-	for _, rule := range expectedRules {
+	for _, ruleToApply := range rulesToApply {
 		g.Go(func() error {
-			err := m.scClient.CreateFirewallRule(ctx, currentDB.ID, currentDB.AddonID, rule)
-			if err == nil {
-				log.Info("Add firewall rule", "rule", rule)
-			} else {
-				log.Error(err, "Fail to add firewall rule", "AppID", currentDB.ID, "AddonID", currentDB.AddonID, "rule", rule)
+			switch ruleToApply.action {
+			case addRuleAction:
+				return m.addFirewallRule(ctx, currentDB.ID, currentDB.AddonID, ruleToApply.rule)
+			case deleteRuleAction:
+				return m.deleteFirewallRule(ctx, currentDB.ID, currentDB.AddonID, ruleToApply.rule)
+			default:
+				return errors.Newf(ctx, "undefined rule action %v", ruleToApply.action)
 			}
-			return err
 		})
 	}
-
 	err := g.Wait()
 	if err != nil {
 		return errors.Wrap(ctx, err, "update firewall rules")
@@ -45,32 +36,62 @@ func (m *manager) updateFirewallRules(ctx context.Context, currentDB domain.Data
 	return nil
 }
 
-type rulesDiff struct {
-	newRules []domain.FirewallRule
-	oldRules []domain.FirewallRule
+func (m *manager) addFirewallRule(ctx context.Context, dbID, addonID string, rule domain.FirewallRule) error {
+	log := logf.FromContext(ctx)
+
+	err := m.scClient.CreateFirewallRule(ctx, dbID, addonID, rule)
+	if err == nil {
+		log.Info("Add firewall rule", "rule", rule)
+	} else {
+		log.Error(err, "Fail to add firewall rule", "AppID", dbID, "AddonID", addonID, "rule", rule)
+	}
+	return err
 }
 
-// extractRulesDiff compares two FirewallRule slices and returns their differential.
-func extractRulesDiff(currentRules []domain.FirewallRule, expectedRules []domain.FirewallRule) rulesDiff {
+func (m *manager) deleteFirewallRule(ctx context.Context, dbID, addonID string, rule domain.FirewallRule) error {
+	log := logf.FromContext(ctx)
+
+	err := m.scClient.DeleteFirewallRule(ctx, dbID, addonID, rule.ID)
+	if err == nil {
+		log.Info("Delete firewall rule", "rule", rule)
+	} else {
+		log.Error(err, "Fail to delete firewall rule", "AppID", dbID, "AddonID", addonID, "rule", rule)
+	}
+	return err
+}
+
+type ruleToApplyAction int
+
+const (
+	addRuleAction ruleToApplyAction = iota
+	deleteRuleAction
+)
+
+type ruleToApply struct {
+	rule   domain.FirewallRule
+	action ruleToApplyAction
+}
+
+type rulesToApply []ruleToApply
+
+// establishRulesToApply compares two FirewallRule slices so as to establish the rules to apply.
+func establishRulesToApply(currentRules []domain.FirewallRule, expectedRules []domain.FirewallRule) rulesToApply {
 	// Sort slices to further use BinarySearchFunc.
 	slices.SortFunc(currentRules, domain.CompareFirewallRules)
 	slices.SortFunc(expectedRules, domain.CompareFirewallRules)
 
-	res := rulesDiff{
-		newRules: make([]domain.FirewallRule, 0, len(expectedRules)),
-		oldRules: make([]domain.FirewallRule, 0, len(currentRules)),
-	}
+	res := make(rulesToApply, 0, len(expectedRules)+len(currentRules))
 
 	for _, rule := range expectedRules {
 		_, found := slices.BinarySearchFunc(currentRules, rule, domain.CompareFirewallRules)
 		if !found {
-			res.newRules = append(res.newRules, rule)
+			res = append(res, ruleToApply{rule, addRuleAction})
 		}
 	}
 	for _, rule := range currentRules {
 		_, found := slices.BinarySearchFunc(expectedRules, rule, domain.CompareFirewallRules)
 		if !found {
-			res.oldRules = append(res.oldRules, rule)
+			res = append(res, ruleToApply{rule, deleteRuleAction})
 		}
 	}
 	return res
