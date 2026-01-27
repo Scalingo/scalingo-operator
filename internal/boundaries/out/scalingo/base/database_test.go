@@ -88,12 +88,27 @@ func TestToDatabase(t *testing.T) {
 		ctx := t.Context()
 		db := scalingoapi.DatabaseNG{
 			Database: scalingoapi.Database{
+				ID:       "some_id",
 				TypeName: "invalid_type",
 			},
 		}
 		_, err := toDatabase(ctx, db)
 
 		require.ErrorContains(t, err, "invalid database type")
+	})
+
+	t.Run("it fails because of unknown db status", func(t *testing.T) {
+		ctx := t.Context()
+		db := scalingoapi.DatabaseNG{
+			Database: scalingoapi.Database{
+				ID:       "some_id",
+				TypeName: "postgresql",
+				Status:   "unknown_status",
+			},
+		}
+		_, err := toDatabase(ctx, db)
+
+		require.ErrorContains(t, err, "unknown database status unknown_status")
 	})
 
 	t.Run("it converts to database", func(t *testing.T) {
@@ -111,6 +126,7 @@ func TestToDatabase(t *testing.T) {
 			Name: dbName,
 			Plan: dbPlan,
 			Database: scalingoapi.Database{
+				ID:       dbID,
 				TypeName: "postgresql",
 				Status:   scalingoapi.DatabaseStatusRunning,
 			},
