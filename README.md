@@ -270,6 +270,7 @@ then, execute `make deploy IMG=...`.
 
 > [!WARNING]
 > You first need to execute the integration tests on `main` to ensure that everything is working.
+> Add any new supported `spec` in `config/samples/databases_v1alpha1_postgresql.yaml`.
 
 Bump new version number in:
 
