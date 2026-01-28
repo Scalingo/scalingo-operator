@@ -44,6 +44,14 @@ func (c *client) ListFirewallRules(ctx context.Context, dbID, addonID string) ([
 	return rules, nil
 }
 
+func (c *client) DeleteFirewallRule(ctx context.Context, dbID, addonID, firewallRuleID string) error {
+	err := c.scClient.Preview().FirewallRulesDestroy(ctx, dbID, addonID, firewallRuleID)
+	if err != nil {
+		return errors.Wrap(ctx, err, "delete firewall rule")
+	}
+	return nil
+}
+
 func toFirewallRule(ctx context.Context, rule scalingoapi.FirewallRule) (domain.FirewallRule, error) {
 	ruleType, err := toFirewallRuleType(ctx, rule.Type)
 	if err != nil {

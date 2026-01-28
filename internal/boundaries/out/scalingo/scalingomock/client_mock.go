@@ -78,6 +78,20 @@ func (mr *MockClientMockRecorder) DeleteDatabase(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDatabase", reflect.TypeOf((*MockClient)(nil).DeleteDatabase), arg0, arg1)
 }
 
+// DeleteFirewallRule mocks base method.
+func (m *MockClient) DeleteFirewallRule(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFirewallRule", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFirewallRule indicates an expected call of DeleteFirewallRule.
+func (mr *MockClientMockRecorder) DeleteFirewallRule(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFirewallRule", reflect.TypeOf((*MockClient)(nil).DeleteFirewallRule), arg0, arg1, arg2, arg3)
+}
+
 // FindApplicationVariable mocks base method.
 func (m *MockClient) FindApplicationVariable(arg0 context.Context, arg1, arg2 string) (string, error) {
 	m.ctrl.T.Helper()

@@ -17,6 +17,7 @@ type Client interface {
 	// Firewall.
 	CreateFirewallRule(ctx context.Context, dbID, addonID string, rule domain.FirewallRule) error
 	ListFirewallRules(ctx context.Context, dbID, addonID string) ([]domain.FirewallRule, error)
+	DeleteFirewallRule(ctx context.Context, dbID, addonID, firewallRuleID string) error
 
 	// Application.
 	FindApplicationVariable(ctx context.Context, appID, varName string) (string, error)

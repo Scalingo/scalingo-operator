@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type FirewallRuleType string
@@ -55,4 +56,22 @@ func (r FirewallRule) Validate() error {
 		}
 	}
 	return nil
+}
+
+// CompareFirewallRules returns FireWallRules compare results, and is compliant with
+// Golang slices methods `SortFunc` and `BinarySearchFunc`:
+// https://pkg.go.dev/golang.org/x/exp/slices
+func CompareFirewallRules(a, b FirewallRule) int {
+	cmpType := strings.Compare(string(a.Type), string(b.Type))
+	if cmpType != 0 {
+		return cmpType
+	}
+
+	// Rules have same type.
+	switch a.Type {
+	case FirewallRuleTypeManagedRange:
+		return strings.Compare(a.RangeID, b.RangeID)
+	default:
+		return strings.Compare(a.CIDR, b.CIDR)
+	}
 }
