@@ -84,3 +84,43 @@ func TestFirewallRule_Validate(t *testing.T) {
 		require.ErrorContains(t, rule.Validate(), "missing cidr")
 	})
 }
+
+func TestFirewallRulesCompare(t *testing.T) {
+	t.Run("it compares rules by types only", func(t *testing.T) {
+		ruleManagedRange := FirewallRule{Type: FirewallRuleTypeManagedRange}
+		ruleManagedCustom := FirewallRule{Type: FirewallRuleTypeCustomRange}
+
+		require.Negative(t, CompareFirewallRules(ruleManagedCustom, ruleManagedRange))
+		require.Positive(t, CompareFirewallRules(ruleManagedRange, ruleManagedCustom))
+		require.Zero(t, CompareFirewallRules(ruleManagedCustom, ruleManagedCustom))
+		require.Zero(t, CompareFirewallRules(ruleManagedRange, ruleManagedRange))
+	})
+
+	t.Run("it compares custom rules", func(t *testing.T) {
+		rule1 := FirewallRule{Type: FirewallRuleTypeCustomRange, CIDR: "0.0.0.0/0"}
+		rule2 := FirewallRule{Type: FirewallRuleTypeCustomRange, CIDR: "192.168.0.1/24"}
+		rule3 := FirewallRule{Type: FirewallRuleTypeCustomRange, CIDR: "192.168.0.1/24", Label: "label"}
+
+		require.Negative(t, CompareFirewallRules(rule1, rule2))
+		require.Positive(t, CompareFirewallRules(rule2, rule1))
+		require.Zero(t, CompareFirewallRules(rule2, rule3))
+	})
+
+	t.Run("it compares managed rules", func(t *testing.T) {
+		rule1 := FirewallRule{Type: FirewallRuleTypeManagedRange, RangeID: "man-osc-fr1-egress"}
+		rule2 := FirewallRule{Type: FirewallRuleTypeManagedRange, RangeID: "man-osc-secnum-fr1-egress"}
+
+		require.Negative(t, CompareFirewallRules(rule1, rule2))
+		require.Positive(t, CompareFirewallRules(rule2, rule1))
+		require.Zero(t, CompareFirewallRules(rule2, rule2))
+	})
+
+	t.Run("it compares mixed rules", func(t *testing.T) {
+		rule1 := FirewallRule{Type: FirewallRuleTypeCustomRange, CIDR: "0.0.0.0/0"}
+		rule2 := FirewallRule{Type: FirewallRuleTypeCustomRange, CIDR: "192.168.0.1/24"}
+		rule3 := FirewallRule{Type: FirewallRuleTypeManagedRange, RangeID: "man-osc-fr1-egress"}
+
+		require.Negative(t, CompareFirewallRules(rule1, rule2))
+		require.Negative(t, CompareFirewallRules(rule2, rule3))
+	})
+}
