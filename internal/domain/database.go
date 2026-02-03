@@ -1,5 +1,12 @@
 package domain
 
+const (
+	DatabaseFeatureForceSsl          = "force-ssl"
+	DatabaseFeaturePubliclyAvailable = "publicly-available"
+)
+
+type DatabaseFeatures map[string]DatabaseFeatureStatus
+
 type Database struct {
 	ID        string
 	AppID     string
@@ -10,5 +17,6 @@ type Database struct {
 	Plan      string
 	ProjectID string
 
+	Features      DatabaseFeatures
 	FireWallRules []FirewallRule
 }

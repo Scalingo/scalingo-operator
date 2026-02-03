@@ -51,6 +51,18 @@ func (c *client) GetDatabase(ctx context.Context, dbID string) (domain.Database,
 	return db, nil
 }
 
+func (c *client) UpdateDatabase(ctx context.Context, db domain.Database) (domain.Database, error) {
+	return domain.Database{}, domain.ErrNotImplemented
+}
+
+func (c *client) DeleteDatabase(ctx context.Context, dbID string) error {
+	err := c.scClient.Preview().DatabaseDestroy(ctx, dbID)
+	if err != nil {
+		return errors.Wrap(ctx, err, "delete database")
+	}
+	return nil
+}
+
 // getAddonIDFromDatabase resolves the addon ID from a database name by calling the API.
 //
 // Shamelessly taken from `cli` project:
@@ -74,18 +86,6 @@ func (c *client) getAddonIDFromDatabase(ctx context.Context, databaseName string
 	}
 
 	return addons[0].ID, nil
-}
-
-func (c *client) UpdateDatabase(ctx context.Context, db domain.Database) (domain.Database, error) {
-	return domain.Database{}, domain.ErrNotImplemented
-}
-
-func (c *client) DeleteDatabase(ctx context.Context, dbID string) error {
-	err := c.scClient.Preview().DatabaseDestroy(ctx, dbID)
-	if err != nil {
-		return errors.Wrap(ctx, err, "delete database")
-	}
-	return nil
 }
 
 func toScalingoProviderId(dbType domain.DatabaseType) (string, error) {
@@ -114,6 +114,7 @@ func toDatabaseStatus(status scalingoapi.DatabaseStatus) (domain.DatabaseStatus,
 func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database, error) {
 	var dbType domain.DatabaseType
 	var dbStatus domain.DatabaseStatus
+	var dbFeatures domain.DatabaseFeatures
 
 	// Freshly created databases come with empty Database subobject.
 	// There is neither type nor status to read from empty Database.
@@ -128,6 +129,11 @@ func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 		if err != nil {
 			return domain.Database{}, errors.Wrap(ctx, err, "to database status")
 		}
+
+		dbFeatures, err = toDatabaseFeatures(ctx, db.Database.Features)
+		if err != nil {
+			return domain.Database{}, errors.Wrap(ctx, err, "to database features")
+		}
 	}
 
 	return domain.Database{
@@ -138,5 +144,6 @@ func toDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 		Status:    dbStatus,
 		Plan:      db.Plan,
 		ProjectID: db.ProjectID,
+		Features:  dbFeatures,
 	}, nil
 }

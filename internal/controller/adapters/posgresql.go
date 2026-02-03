@@ -21,6 +21,7 @@ func PostgreSQLToDatabase(ctx context.Context, postgresql apiv1alpha1.PostgreSQL
 		Type:          domain.DatabaseTypePostgreSQL,
 		Plan:          postgresql.Spec.Plan,
 		ProjectID:     postgresql.Spec.ProjectID,
+		Features:      toFeatures(postgresql.Spec.Networking),
 		FireWallRules: rules,
 	}, nil
 }

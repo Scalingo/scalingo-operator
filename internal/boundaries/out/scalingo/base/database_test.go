@@ -136,12 +136,13 @@ func TestToDatabase(t *testing.T) {
 		}
 
 		expectedDB := domain.Database{
-			ID:     dbID,
-			AppID:  appID,
-			Name:   dbName,
-			Type:   domain.DatabaseTypePostgreSQL,
-			Status: domain.DatabaseStatusRunning,
-			Plan:   dbPlan,
+			ID:       dbID,
+			AppID:    appID,
+			Name:     dbName,
+			Type:     domain.DatabaseTypePostgreSQL,
+			Status:   domain.DatabaseStatusRunning,
+			Plan:     dbPlan,
+			Features: domain.DatabaseFeatures{},
 		}
 
 		res, err := toDatabase(ctx, db)

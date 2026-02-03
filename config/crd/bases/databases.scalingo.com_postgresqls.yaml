@@ -120,6 +120,19 @@ spec:
                     required:
                     - rules
                     type: object
+                  internet_access:
+                    description: InternetAccess defines the external access through
+                      internet.
+                    properties:
+                      enabled:
+                        default: true
+                        description: Enabled enables external access.
+                        type: boolean
+                    required:
+                    - enabled
+                    type: object
+                required:
+                - internet_access
                 type: object
               plan:
                 description: Plan is the plan to use for the PostgreSQL database.

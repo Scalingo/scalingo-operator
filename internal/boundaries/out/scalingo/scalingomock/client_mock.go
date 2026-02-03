@@ -92,6 +92,34 @@ func (mr *MockClientMockRecorder) DeleteFirewallRule(arg0, arg1, arg2, arg3 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFirewallRule", reflect.TypeOf((*MockClient)(nil).DeleteFirewallRule), arg0, arg1, arg2, arg3)
 }
 
+// DisableDatabaseFeature mocks base method.
+func (m *MockClient) DisableDatabaseFeature(arg0 context.Context, arg1 domain.Database, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableDatabaseFeature", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableDatabaseFeature indicates an expected call of DisableDatabaseFeature.
+func (mr *MockClientMockRecorder) DisableDatabaseFeature(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableDatabaseFeature", reflect.TypeOf((*MockClient)(nil).DisableDatabaseFeature), arg0, arg1, arg2)
+}
+
+// EnableDatabaseFeature mocks base method.
+func (m *MockClient) EnableDatabaseFeature(arg0 context.Context, arg1 domain.Database, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableDatabaseFeature", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableDatabaseFeature indicates an expected call of EnableDatabaseFeature.
+func (mr *MockClientMockRecorder) EnableDatabaseFeature(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableDatabaseFeature", reflect.TypeOf((*MockClient)(nil).EnableDatabaseFeature), arg0, arg1, arg2)
+}
+
 // FindApplicationVariable mocks base method.
 func (m *MockClient) FindApplicationVariable(arg0 context.Context, arg1, arg2 string) (string, error) {
 	m.ctrl.T.Helper()

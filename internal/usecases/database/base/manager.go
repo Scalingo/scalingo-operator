@@ -87,7 +87,22 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 		return errors.Wrapf(ctx, err, "unreachable database %s", dbID)
 	}
 
-	return m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
+	// Internet public access.
+	publiclyAvailable, ok := expectedDB.Features[domain.DatabaseFeaturePubliclyAvailable]
+	expectedEnableInternetAccess := ok && publiclyAvailable == domain.DatabaseFeatureStatusActivated
+
+	err = m.updateInternetAccess(ctx, currentDB, expectedEnableInternetAccess)
+	if err != nil {
+		return errors.Wrap(ctx, err, "update internet access")
+	}
+
+	// Firewall rules.
+	err = m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
+	if err != nil {
+		return errors.Wrap(ctx, err, "update firewall rules")
+	}
+
+	return nil
 }
 
 func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {
