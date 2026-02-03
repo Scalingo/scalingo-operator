@@ -1,9 +1,20 @@
 package v1alpha1
 
 type NetworkingSpec struct {
+	// InternetAccess defines the external access through internet.
+	// +kubebuilder:validation:Required
+	InternetAccess InternetAccessSpec `json:"internet_access"`
+
 	// Firewall defines the firewall rules.
 	// +optional
 	Firewall *FirewallSpec `json:"firewall,omitempty"`
+}
+type InternetAccessSpec struct {
+	// Enabled enables external access.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=true
+	// +kubebuilder:default=true
+	Enabled bool `json:"enabled"`
 }
 
 type FirewallSpec struct {

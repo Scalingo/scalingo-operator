@@ -39,8 +39,8 @@ type PostgreSQLSpec struct {
 	ConnInfoSecretTarget SecretTargetSpec `json:"connInfoSecretTarget"`
 
 	// Network defines the networking configuration.
-	// +optional
-	Networking *NetworkingSpec `json:"networking,omitempty"`
+	// +kubebuilder:validation:Required
+	Networking NetworkingSpec `json:"networking"`
 
 	// Name is the name of the PostgreSQL database to create on Scalingo
 	// +kubebuilder:validation:MinLength=5
