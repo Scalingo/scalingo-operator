@@ -18,7 +18,7 @@ func PostgreSQLToDatabase(ctx context.Context, postgresql apiv1alpha1.PostgreSQL
 
 	dbName := postgresql.Spec.Name
 	if dbName == "" {
-		dbName = postgresql.ObjectMeta.Name
+		dbName = postgresql.Name
 	}
 
 	return domain.Database{
