@@ -1,4 +1,4 @@
-# Scalingo Operator v1.0.0-alpha1
+# Scalingo Operator v1.1.0-alpha1
 
 The Scalingo Operator can deploy and undeploy PostgreSQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
@@ -132,7 +132,6 @@ kubectl get namespaces
 kubectl get crds
 ```
 
-
 # Architecture
 
 This application follows a (slightly adapted version of) the [clean architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) pattern.
@@ -218,16 +217,6 @@ kubectl get crd
 make run
 ```
 
-### Build and Deploy Image
-```sh
-VERSION="1.0.0-alpha1"
-
-# build and push your image to the location specified by IMG
-make docker-build docker-push IMG=scalingo/scalingo-operator:v$VERSION
-
-# deploy the controller to the cluster with image specified by IMG
-make deploy IMG=scalingo/scalingo-operator:v$VERSION
-```
 ### List make Targets
 
 To list the `make` targets with their description:
@@ -290,17 +279,18 @@ then, execute `make deploy IMG=...`.
 > Add any new supported `spec` in `config/samples/databases_v1alpha1_postgresql.yaml`.
 
 Bump new version number in:
-
-- `CHANGELOG.md`
+- `config/manager/kustomization.yaml`, field `newTag`, do not forget the prefix `v`,
+- `CHANGELOG.md`,
 - `README.md`: all `VERSION` contents.
+
 
 Commit, tag and create a new release:
 
 ```sh
-VERSION="1.0.0-alpha1"
+VERSION="1.1.0-alpha1"
 
 git switch --create release/${VERSION}
-git add CHANGELOG.md README.md
+git add CHANGELOG.md README.md config
 git commit --message="feat: bump v${VERSION}"
 git push --set-upstream origin release/${VERSION}
 gh pr create --reviewer=scalingo/team-ist --fill-first
