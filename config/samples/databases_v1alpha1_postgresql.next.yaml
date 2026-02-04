@@ -1,5 +1,4 @@
-# Preview custom resource descriptor.
-# May be available at next release.
+# Next coming custom resource descriptor sample.
 apiVersion: databases.scalingo.com/v1alpha1
 kind: PostgreSQL
 metadata:
@@ -15,7 +14,19 @@ spec:
     name: my-postgresql-secret
     prefix: PG
 
-  # spec.name becomes optional, uses metadata.name as default database name.
+# Since v1.1.0-alpha1
+  networking:
+    internet_access:
+      enabled: true
+    firewall:
+      rules:
+        - type: "custom_range"
+          cidr: "0.0.0.0/0"
+          label: "Allow the world"
+        - type: "managed_range"
+          range_id: "man-osc-fr1-egress"
+
+  # spec.name becomes optional, fallback on metadata.name
   name: my-dbng-name
   plan: postgresql-ng-enterprise-4096
   region: osc-fr1
