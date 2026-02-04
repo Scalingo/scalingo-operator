@@ -1,0 +1,22 @@
+# Preview custom resource descriptor.
+# May be available at next release.
+apiVersion: databases.scalingo.com/v1alpha1
+kind: PostgreSQL
+metadata:
+  labels:
+    app.kubernetes.io/name: scalingo-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: postgresql-sample
+spec:
+  authSecret:
+    name: scalingo
+    key: api_token
+  connInfoSecretTarget:
+    name: my-postgresql-secret
+    prefix: PG
+
+  # spec.name becomes optional, uses metadata.name as default database name.
+  name: my-dbng-name
+  plan: postgresql-ng-enterprise-4096
+  region: osc-fr1
+  projectID: prj-88888888-4444-4444-4444-cccccccccccc

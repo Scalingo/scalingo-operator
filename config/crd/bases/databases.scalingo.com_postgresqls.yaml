@@ -77,7 +77,7 @@ spec:
                 type: object
               name:
                 description: Name is the name of the PostgreSQL database to create
-                  on Scalingo
+                  on Scalingo. Fallbacks on meta.name if empty.
                 minLength: 5
                 type: string
               networking:
@@ -154,7 +154,6 @@ spec:
             required:
             - authSecret
             - connInfoSecretTarget
-            - name
             - networking
             - plan
             - region

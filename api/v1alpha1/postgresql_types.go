@@ -42,10 +42,10 @@ type PostgreSQLSpec struct {
 	// +kubebuilder:validation:Required
 	Networking NetworkingSpec `json:"networking"`
 
-	// Name is the name of the PostgreSQL database to create on Scalingo
+	// Name is the name of the PostgreSQL database to create on Scalingo. Fallbacks on meta.name if empty.
 	// +kubebuilder:validation:MinLength=5
-	// +kubebuilder:validation:Required
-	Name string `json:"name"`
+	// +optional
+	Name string `json:"name,omitempty"`
 
 	// Plan is the plan to use for the PostgreSQL database.
 	// +kubebuilder:validation:MinLength=10
