@@ -87,6 +87,9 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 		return errors.Wrapf(ctx, err, "unreachable database %s", dbID)
 	}
 
+	// An `m.updateInternetAccess` full implementation is available in this PR:
+	// https://github.com/Scalingo/scalingo-operator/pull/22
+
 	return m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
 }
 

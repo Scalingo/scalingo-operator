@@ -8,8 +8,8 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-func toFirewallRules(ctx context.Context, networkSpec *v1alpha1.NetworkingSpec) ([]domain.FirewallRule, error) {
-	if networkSpec == nil || networkSpec.Firewall == nil || len(networkSpec.Firewall.Rules) == 0 {
+func toFirewallRules(ctx context.Context, networkSpec v1alpha1.NetworkingSpec) ([]domain.FirewallRule, error) {
+	if networkSpec.Firewall == nil || len(networkSpec.Firewall.Rules) == 0 {
 		return nil, nil
 	}
 
