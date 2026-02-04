@@ -90,6 +90,23 @@ kubectl get secret $NAME -o jsonpath='{.data}' | grep $PREFIX
 echo "ZGJfY29ubmVjdGlvbl9zdHJpbmc=" | base64 --decode
 ```
 
+## Deploy Multiple Databases Resources
+
+Every database resource is identified by its `meta.name` and it must use its own database name and database connection information.
+
+Ensure to use distinct values for these fields in a new database resource descriptor:
+
+| Field                             | Description                             |
+| --------------------------------- | --------------------------------------- |
+| `meta.name`                       | Database resource unique name           |
+| `spec.name`                       | Scalingo database unique name           |
+| `spec.connInfoSecretTarget.name`  | Secret database connection informations |
+
+Then deploy using the new database resource descriptor:
+```sh
+kubectl apply --filename new_database_v1alpha1_postgresql.yaml
+```
+
 ## Undeploy Database
 
 Use almost the same command than deploy, with the same descriptor file: replace `apply` by `delete`.
