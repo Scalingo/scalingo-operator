@@ -92,7 +92,7 @@ echo "ZGJfY29ubmVjdGlvbl9zdHJpbmc=" | base64 --decode
 
 ## Deploy Multiple Databases Resources
 
-Every database resource is identified by its `meta.name`, must use its own database name and its own database connection informations.
+Every database resource is identified by its `meta.name` and it must use its own database name and database connection information.
 
 Ensure to use distinct values for these fields in a new database resource descriptor:
 
