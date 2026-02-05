@@ -16,8 +16,13 @@ func PostgreSQLToDatabase(ctx context.Context, postgresql apiv1alpha1.PostgreSQL
 		return domain.Database{}, errors.Wrap(ctx, err, "to firewall rules")
 	}
 
+	dbName := postgresql.Spec.Name
+	if dbName == "" {
+		dbName = postgresql.Name
+	}
+
 	return domain.Database{
-		Name:          postgresql.Spec.Name,
+		Name:          dbName,
 		Type:          domain.DatabaseTypePostgreSQL,
 		Plan:          postgresql.Spec.Plan,
 		ProjectID:     postgresql.Spec.ProjectID,

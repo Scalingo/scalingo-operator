@@ -122,14 +122,14 @@ Not necessary, if Operator undeploy is needed execute the opposite deploy comman
 
 ```sh
 # Replace my-namespace and my-operator using your own names
-kubectl delete deployment my-operator --namespace scalingo-operator-system
+kubectl delete deploy/scalingo-operator-controller-manager --namespace scalingo-operator-system
 kubectl delete namespace scalingo-operator-system
 kubectl delete --kustomize config/crd
 
 # Verifications
 kubectl get deploy,pods --namespace scalingo-operator-system
 kubectl get namespaces
-kubectl get crds
+kubectl get crds -A
 ```
 
 # Architecture

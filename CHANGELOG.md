@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* feat: use CR `meta.name` as default database name
+
 ## v1.1.0-alpha1
 
 * feat: add and remove firewall rules
