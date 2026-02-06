@@ -28,9 +28,15 @@ func IsDatabaseProvisioning(conditions []metav1.Condition) bool {
 	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionProvisioning))
 }
 
-func SetDatabaseInitialState(dbMeta *metav1.ObjectMeta, conditions *[]metav1.Condition) {
+func SetDatabaseIsNotRunning(dbMeta *metav1.ObjectMeta) {
 	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueFalse)
+}
 
+func SetDatabaseIsRunning(dbMeta *metav1.ObjectMeta) {
+	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueTrue)
+}
+
+func SetDatabaseInitialStatus(conditions *[]metav1.Condition) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:    string(DatabaseStatusConditionAvailable),
 		Status:  metav1.ConditionFalse,
@@ -55,9 +61,7 @@ func SetDatabaseStatusProvisioning(conditions *[]metav1.Condition) {
 	})
 }
 
-func SetDatabaseStatusProvisioned(dbMeta *metav1.ObjectMeta, conditions *[]metav1.Condition) {
-	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueTrue)
-
+func SetDatabaseStatusProvisioned(conditions *[]metav1.Condition) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:    string(DatabaseStatusConditionAvailable),
 		Status:  metav1.ConditionTrue,
