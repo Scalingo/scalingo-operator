@@ -111,7 +111,25 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, errors.Wrap(ctx, err, "bad custom resource format")
 	}
 
+	log.Info("### start", "is running annotation", postgresql.Annotations[helpers.DatabaseAnnotationIsRunning])
 	log.Info("### start", "status", postgresql.Status)
+
+	orig := postgresql.DeepCopy()
+	helpers.SetDatabaseIsNotRunning(&postgresql.ObjectMeta)
+	err = r.Patch(ctx, &postgresql, client.MergeFrom(orig))
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource")
+	}
+
+	orig = postgresql.DeepCopy()
+	helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
+	err = r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
+	if err != nil {
+		return ctrl.Result{}, errors.Wrap(ctx, err, "patch database status subresource")
+	}
+
+	log.Info("### after update", "is running annotation", postgresql.Annotations[helpers.DatabaseAnnotationIsRunning])
+	log.Info("### after update", "status", postgresql.Status)
 
 	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
