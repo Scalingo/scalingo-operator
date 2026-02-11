@@ -2,6 +2,7 @@
 
 ## To Be Released
 
+* fix: avoid reconcile resource updates conflicts
 * feat: use CR `meta.name` as default database name
 
 ## v1.1.0-alpha1
