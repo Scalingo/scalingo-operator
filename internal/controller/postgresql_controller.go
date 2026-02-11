@@ -66,41 +66,52 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log.Info("### start", "is running annotation", postgresql.Annotations[helpers.DatabaseAnnotationIsRunning])
 	log.Info("### start", "status", postgresql.Status)
 
-	// Add finalizer.
-	if !controllerutil.ContainsFinalizer(&postgresql, helpers.PostgreSQLFinalizerName) {
+	// Initialize:
+	// 1/ add finalizer + requeue
+	// 2/ set initial Status.Condition + requeue
+	// 3/ set initial Annotations + requeue
+	//
+	// Note: the `requeue` prevents resource update conflicts.
+	containsFinalizer := controllerutil.ContainsFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
+	hasRunningAnnotation := metav1.HasAnnotation(postgresql.ObjectMeta, helpers.DatabaseAnnotationIsRunning)
+	isDatabaseStatusIntialized := helpers.IsDatabaseInitialized(postgresql.Status.Conditions)
+
+	switch {
+	case !containsFinalizer:
 		log.Info("Add finalizer to resource", "finalizer", helpers.PostgreSQLFinalizerName)
+
 		controllerutil.AddFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
 		err := r.Update(ctx, &postgresql)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "add PostgreSQL finalizer")
 		}
 		return ctrl.Result{Requeue: true}, nil
-	}
+	case !hasRunningAnnotation && !isDatabaseStatusIntialized:
+		log.Info("Initialize status conditions")
 
-	// Initialize status conditions and annotations if not present.
-	// Occurs in two steps:
-	// 1/ set initial Status.Condition, requeue
-	// 2/ set initial Annotations
-	if !metav1.HasAnnotation(postgresql.ObjectMeta, helpers.DatabaseAnnotationIsRunning) {
 		orig := postgresql.DeepCopy()
+		helpers.SetDatabaseInitialStatus(&postgresql.Status.Conditions)
 
-		if !helpers.IsDatabaseInitialized(postgresql.Status.Conditions) {
-			log.Info("Initialize status conditions")
-
-			helpers.SetDatabaseInitialStatus(&postgresql.Status.Conditions)
-			err := r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
-			if err != nil {
-				return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial status")
-			}
-		} else {
-			log.Info("Initialize annotations")
-			helpers.SetDatabaseIsNotRunning(&postgresql.ObjectMeta)
-			err := r.Patch(ctx, &postgresql, client.MergeFrom(orig))
-			if err != nil {
-				return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial annotations")
-			}
+		err := r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial status")
 		}
 		return ctrl.Result{Requeue: true}, nil
+	case !hasRunningAnnotation && isDatabaseStatusIntialized:
+		log.Info("Initialize annotations")
+
+		orig := postgresql.DeepCopy()
+		helpers.SetDatabaseIsNotRunning(&postgresql.ObjectMeta)
+
+		err := r.Patch(ctx, &postgresql, client.MergeFrom(orig))
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial annotations")
+		}
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	if true {
+		return ctrl.Result{}, nil
 	}
 
 	// Read secret token.
@@ -124,18 +135,19 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(ctx, err, "bad custom resource format")
 	}
-	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
 	isDatabaseProvisioning := helpers.IsDatabaseProvisioning(postgresql.Status.Conditions)
-	requeueLater := false
+	isDatabaseRunning := helpers.IsDatabaseRunning(postgresql.ObjectMeta)
 
 	log.Info("Current state",
 		"database", postgresql.Status.ScalingoDatabaseID,
-		"running", isDatabaseRunning,
 		"deletion_requested", isDatabaseDeletionRequested,
 		"available", isDatabaseAvailable,
-		"provisioning", isDatabaseProvisioning)
+		"provisioning", isDatabaseProvisioning,
+		"running", isDatabaseRunning)
+
+	requeueLater := false
 
 	switch {
 	case isDatabaseDeletionRequested:
