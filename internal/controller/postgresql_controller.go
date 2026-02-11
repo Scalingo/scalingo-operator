@@ -62,6 +62,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// TODO(david): TO REMOVE
+	log.Info("### start", "is running annotation", postgresql.Annotations[helpers.DatabaseAnnotationIsRunning])
+	log.Info("### start", "status", postgresql.Status)
+
 	// Add finalizer.
 	if !controllerutil.ContainsFinalizer(&postgresql, helpers.PostgreSQLFinalizerName) {
 		log.Info("Add finalizer to resource", "finalizer", helpers.PostgreSQLFinalizerName)
@@ -70,17 +74,33 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "add PostgreSQL finalizer")
 		}
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	// Initialize status conditions and annotations if not present.
+	// Occurs in two steps:
+	// 1/ set initial Status.Condition, requeue
+	// 2/ set initial Annotations
 	if !metav1.HasAnnotation(postgresql.ObjectMeta, helpers.DatabaseAnnotationIsRunning) {
-		log.Info("Initialize status conditions and annotations")
+		orig := postgresql.DeepCopy()
 
-		helpers.SetDatabaseInitialState(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
-		err := r.Update(ctx, &postgresql)
-		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "set initial state")
+		if !helpers.IsDatabaseInitialized(postgresql.Status.Conditions) {
+			log.Info("Initialize status conditions")
+
+			helpers.SetDatabaseInitialStatus(&postgresql.Status.Conditions)
+			err := r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
+			if err != nil {
+				return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial status")
+			}
+		} else {
+			log.Info("Initialize annotations")
+			helpers.SetDatabaseIsNotRunning(&postgresql.ObjectMeta)
+			err := r.Patch(ctx, &postgresql, client.MergeFrom(orig))
+			if err != nil {
+				return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial annotations")
+			}
 		}
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	// Read secret token.
@@ -108,7 +128,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
 	isDatabaseProvisioning := helpers.IsDatabaseProvisioning(postgresql.Status.Conditions)
-	requeue := false
+	requeueLater := false
 
 	log.Info("Current state",
 		"database", postgresql.Status.ScalingoDatabaseID,
@@ -127,6 +147,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
 		}
 		controllerutil.RemoveFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
+		err = r.Update(ctx, &postgresql)
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "remove finalizer")
+		}
 	case !isDatabaseAvailable && postgresql.Status.ScalingoDatabaseID == "":
 		// Create database.
 		log.Info("Create database resource")
@@ -137,14 +161,26 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "create database %s", expectedDB.Name)
 		}
 
+		orig := postgresql.DeepCopy()
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
 		helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
 
-		err = r.Status().Update(ctx, &postgresql)
+		err = r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource status")
 		}
-		requeue = true
+		requeueLater = true
+	case isDatabaseAvailable && !isDatabaseRunning:
+		// Update running annotation.
+		log.Info("Update database running annotation")
+
+		orig := postgresql.DeepCopy()
+		helpers.SetDatabaseIsRunning(&postgresql.ObjectMeta)
+
+		err = r.Patch(ctx, &postgresql, client.MergeFrom(orig))
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource running annotation")
+		}
 	case isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
 		// Update database.
 		log.Info("Update database resource")
@@ -155,9 +191,12 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s", expectedDB.Name)
 		}
 
-		err = r.Status().Update(ctx, &postgresql)
+		orig := postgresql.DeepCopy()
+		helpers.SetDatabaseStatusProvisioned(&postgresql.Status.Conditions)
+
+		err = r.Patch(ctx, &postgresql, client.MergeFrom(orig))
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource status")
 		}
 	case isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
 		// Wait for database creation.
@@ -168,11 +207,13 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		if currentDB.Status == domain.DatabaseStatusRunning {
 			log.Info("Database is provisioned")
-			helpers.SetDatabaseStatusProvisioned(&postgresql.ObjectMeta, &postgresql.Status.Conditions)
 
-			err = r.Status().Update(ctx, &postgresql)
+			orig := postgresql.DeepCopy()
+			helpers.SetDatabaseStatusProvisioned(&postgresql.Status.Conditions)
+
+			err = r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
 			if err != nil {
-				return ctrl.Result{}, errors.Wrap(ctx, err, "update database status")
+				return ctrl.Result{}, errors.Wrap(ctx, err, "update database resource status")
 			}
 
 			// Write connection info in secret
@@ -193,18 +234,14 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
 			}
+			return ctrl.Result{Requeue: true}, nil // Requeue for the is running annotation.
 		} else {
 			log.Info("Waiting for database being provisioned")
-			requeue = true
+			requeueLater = true
 		}
 	}
 
-	err = r.Update(ctx, &postgresql)
-	if err != nil {
-		return ctrl.Result{}, errors.Wrap(ctx, err, "update database")
-	}
-
-	if requeue {
+	if requeueLater {
 		log.Info("Requeue after delay", "delay", helpers.RequeueDelay)
 		return ctrl.Result{RequeueAfter: helpers.RequeueDelay}, nil
 	}

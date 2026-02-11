@@ -110,22 +110,19 @@ func TestIsDatabaseProvisioning(t *testing.T) {
 
 func TestSetDatabaseInitialState(t *testing.T) {
 	t.Run("sets initial state correctly", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseInitialState(dbMeta, conditions)
+		SetDatabaseInitialStatus(conditions)
 
-		require.Equal(t, "false", dbMeta.Annotations[DatabaseAnnotationIsRunning])
 		require.Len(t, *conditions, 2)
 		require.False(t, IsDatabaseAvailable(*conditions))
 		require.False(t, IsDatabaseProvisioning(*conditions))
 	})
 
 	t.Run("sets correct reasons and messages", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseInitialState(dbMeta, conditions)
+		SetDatabaseInitialStatus(conditions)
 
 		require.Equal(t, reasonNotAvailable, (*conditions)[0].Reason)
 		require.Equal(t, msgNotAvailable, (*conditions)[0].Message)
@@ -165,22 +162,19 @@ func TestSetDatabaseStatusProvisioning(t *testing.T) {
 
 func TestSetDatabaseStatusProvisioned(t *testing.T) {
 	t.Run("sets provisioned status correctly", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseStatusProvisioned(dbMeta, conditions)
+		SetDatabaseStatusProvisioned(conditions)
 
-		require.Equal(t, "true", dbMeta.Annotations[DatabaseAnnotationIsRunning])
 		require.Len(t, *conditions, 2)
 		require.True(t, IsDatabaseAvailable(*conditions))
 		require.False(t, IsDatabaseProvisioning(*conditions))
 	})
 
 	t.Run("sets correct reasons and messages", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseStatusProvisioned(dbMeta, conditions)
+		SetDatabaseStatusProvisioned(conditions)
 
 		require.Len(t, *conditions, 2)
 		for _, cond := range *conditions {
