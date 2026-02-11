@@ -11,6 +11,18 @@ const DatabaseAnnotationIsRunning = "databases.scalingo.com/db-is-running"
 // Helper functions to read and modify operator status through its
 // Meta data: annotations and status conditions.
 
+func IsDatabaseInitialized(conditions []metav1.Condition) bool {
+	return meta.IsStatusConditionFalse(conditions, string(DatabaseStatusConditionAvailable))
+}
+
+func IsDatabaseProvisioning(conditions []metav1.Condition) bool {
+	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionProvisioning))
+}
+
+func IsDatabaseAvailable(conditions []metav1.Condition) bool {
+	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionAvailable))
+}
+
 func IsDatabaseRunning(dbMeta metav1.ObjectMeta) bool {
 	return metav1.HasAnnotation(dbMeta, DatabaseAnnotationIsRunning) &&
 		dbMeta.Annotations[DatabaseAnnotationIsRunning] == annotationValueTrue
@@ -18,18 +30,6 @@ func IsDatabaseRunning(dbMeta metav1.ObjectMeta) bool {
 
 func IsDatabaseDeletionRequested(dbMeta metav1.ObjectMeta) bool {
 	return !dbMeta.DeletionTimestamp.IsZero()
-}
-
-func IsDatabaseInitialized(conditions []metav1.Condition) bool {
-	return meta.IsStatusConditionFalse(conditions, string(DatabaseStatusConditionAvailable))
-}
-
-func IsDatabaseAvailable(conditions []metav1.Condition) bool {
-	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionAvailable))
-}
-
-func IsDatabaseProvisioning(conditions []metav1.Condition) bool {
-	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionProvisioning))
 }
 
 func SetDatabaseInitialStatus(conditions *[]metav1.Condition) {
@@ -46,15 +46,6 @@ func SetDatabaseInitialStatus(conditions *[]metav1.Condition) {
 		Reason:  reasonNotprovisioned,
 		Message: msgNotProvisioned,
 	})
-}
-
-// TODO(david): move somewhere else ?
-func SetDatabaseIsNotRunning(dbMeta *metav1.ObjectMeta) {
-	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueFalse)
-}
-
-func SetDatabaseIsRunning(dbMeta *metav1.ObjectMeta) {
-	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueTrue)
 }
 
 func SetDatabaseStatusProvisioning(conditions *[]metav1.Condition) {
@@ -79,6 +70,14 @@ func SetDatabaseStatusProvisioned(conditions *[]metav1.Condition) {
 		Reason:  reasonProvisioned,
 		Message: msgProvisioned,
 	})
+}
+
+func SetDatabaseIsNotRunning(dbMeta *metav1.ObjectMeta) {
+	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueFalse)
+}
+
+func SetDatabaseIsRunning(dbMeta *metav1.ObjectMeta) {
+	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueTrue)
 }
 
 // Private constants.

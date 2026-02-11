@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,10 +63,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// TODO(david): TO REMOVE
-	log.Info("### start", "is running annotation", postgresql.Annotations[helpers.DatabaseAnnotationIsRunning])
-	log.Info("### start", "status", postgresql.Status)
-
 	// Initialize:
 	// 1/ add finalizer + requeue
 	// 2/ set initial Status.Condition + requeue
@@ -83,9 +80,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		controllerutil.AddFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
 		err := r.Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "add PostgreSQL finalizer")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "add resource finalizer")
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: helpers.RequeueShortDelay}, nil
+
 	case !hasRunningAnnotation && !isDatabaseStatusIntialized:
 		log.Info("Initialize status conditions")
 
@@ -96,7 +94,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial status")
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{RequeueAfter: helpers.RequeueShortDelay}, nil
+
 	case !hasRunningAnnotation && isDatabaseStatusIntialized:
 		log.Info("Initialize annotations")
 
@@ -105,13 +104,9 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		err := r.Patch(ctx, &postgresql, client.MergeFrom(orig))
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial annotations")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource initial annotation")
 		}
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	if true {
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: helpers.RequeueShortDelay}, nil
 	}
 
 	// Read secret token.
@@ -131,10 +126,13 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, errors.Wrap(ctx, err, "create database manager")
 	}
 
+	// Requested/expected database resource.
 	expectedDB, err := adapters.PostgreSQLToDatabase(ctx, postgresql)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(ctx, err, "bad custom resource format")
 	}
+
+	// State informations.
 	isDatabaseDeletionRequested := helpers.IsDatabaseDeletionRequested(postgresql.ObjectMeta)
 	isDatabaseAvailable := helpers.IsDatabaseAvailable(postgresql.Status.Conditions)
 	isDatabaseProvisioning := helpers.IsDatabaseProvisioning(postgresql.Status.Conditions)
@@ -147,25 +145,32 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		"provisioning", isDatabaseProvisioning,
 		"running", isDatabaseRunning)
 
-	requeueLater := false
+	var (
+		orig         *databasesv1alpha1.PostgreSQL // Trigger resource update.
+		origStatus   *databasesv1alpha1.PostgreSQL // Trigger resource status update.
+		requeueLater time.Duration                 // Trigger requeue for later.
+	)
 
+	// Create/update/delete database.
 	switch {
 	case isDatabaseDeletionRequested:
 		// Delete database.
-		log.Info("Delete database resource")
+		log.Info("Delete database")
 
 		err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
 		}
+
 		controllerutil.RemoveFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
 		err = r.Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "remove finalizer")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "remove resource finalizer")
 		}
+
 	case !isDatabaseAvailable && postgresql.Status.ScalingoDatabaseID == "":
 		// Create database.
-		log.Info("Create database resource")
+		log.Info("Create database")
 
 		newDB, err := dbManager.CreateDatabase(ctx, expectedDB)
 		if err != nil {
@@ -173,29 +178,22 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "create database %s", expectedDB.Name)
 		}
 
-		orig := postgresql.DeepCopy()
+		origStatus = postgresql.DeepCopy()
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
 		helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
 
-		err = r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
-		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource status")
-		}
-		requeueLater = true
+		requeueLater = helpers.RequeueLongDelay
+
 	case isDatabaseAvailable && !isDatabaseRunning:
 		// Update running annotation.
 		log.Info("Update database running annotation")
 
-		orig := postgresql.DeepCopy()
+		orig = postgresql.DeepCopy()
 		helpers.SetDatabaseIsRunning(&postgresql.ObjectMeta)
 
-		err = r.Patch(ctx, &postgresql, client.MergeFrom(orig))
-		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource running annotation")
-		}
 	case isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
 		// Update database.
-		log.Info("Update database resource")
+		log.Info("Update database")
 
 		err = dbManager.UpdateDatabase(ctx, postgresql.Status.ScalingoDatabaseID, expectedDB)
 		if err != nil {
@@ -203,13 +201,9 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s", expectedDB.Name)
 		}
 
-		orig := postgresql.DeepCopy()
+		orig = postgresql.DeepCopy()
 		helpers.SetDatabaseStatusProvisioned(&postgresql.Status.Conditions)
 
-		err = r.Patch(ctx, &postgresql, client.MergeFrom(orig))
-		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource status")
-		}
 	case isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
 		// Wait for database creation.
 		currentDB, err := dbManager.GetDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
@@ -220,13 +214,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if currentDB.Status == domain.DatabaseStatusRunning {
 			log.Info("Database is provisioned")
 
-			orig := postgresql.DeepCopy()
+			origStatus = postgresql.DeepCopy()
 			helpers.SetDatabaseStatusProvisioned(&postgresql.Status.Conditions)
-
-			err = r.Status().Patch(ctx, &postgresql, client.MergeFrom(orig))
-			if err != nil {
-				return ctrl.Result{}, errors.Wrap(ctx, err, "update database resource status")
-			}
 
 			// Write connection info in secret
 			dbURL, err := dbManager.GetDatabaseURL(ctx, currentDB)
@@ -246,17 +235,34 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
 			}
-			return ctrl.Result{Requeue: true}, nil // Requeue for the is running annotation.
+
+			requeueLater = helpers.RequeueShortDelay // Requeue for the is running annotation.
 		} else {
 			log.Info("Waiting for database being provisioned")
-			requeueLater = true
+			requeueLater = helpers.RequeueLongDelay
 		}
 	}
 
-	if requeueLater {
-		log.Info("Requeue after delay", "delay", helpers.RequeueDelay)
-		return ctrl.Result{RequeueAfter: helpers.RequeueDelay}, nil
+	// Post actions.
+	switch {
+	case origStatus != nil:
+		err = r.Status().Patch(ctx, &postgresql, client.MergeFrom(origStatus))
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource status")
+		}
+	case orig != nil:
+		err = r.Patch(ctx, &postgresql, client.MergeFrom(origStatus))
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource")
+		}
 	}
+
+	if requeueLater > 0 {
+		log.Info("Requeue after", "delay", requeueLater)
+		return ctrl.Result{RequeueAfter: requeueLater}, nil
+	}
+
+	log.Info("Ready")
 	return ctrl.Result{}, nil
 }
 
