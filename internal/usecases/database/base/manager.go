@@ -90,7 +90,20 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 	// An `m.updateInternetAccess` full implementation is available in this PR:
 	// https://github.com/Scalingo/scalingo-operator/pull/22
 
-	return m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
+	err = m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
+	if err != nil {
+		return errors.Wrap(ctx, err, "update firewall rules")
+	}
+
+	if currentDB.Status == domain.DatabaseStatusProvisioning {
+		return nil // Next updates can not occur while provisioning.
+	}
+
+	err = m.updateDatabasePlan(ctx, currentDB, expectedDB)
+	if err != nil {
+		return errors.Wrap(ctx, err, "update database plan")
+	}
+	return nil
 }
 
 func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {

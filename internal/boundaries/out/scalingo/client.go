@@ -11,7 +11,7 @@ type Client interface {
 	// Database.
 	CreateDatabase(ctx context.Context, db domain.Database) (domain.Database, error)
 	GetDatabase(ctx context.Context, dbID string) (domain.Database, error)
-	UpdateDatabase(ctx context.Context, db domain.Database) (domain.Database, error)
+	UpdateDatabasePlan(ctx context.Context, db domain.Database) error
 	DeleteDatabase(ctx context.Context, dbID string) error
 
 	// Firewall.
