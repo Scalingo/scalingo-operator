@@ -12,7 +12,7 @@ const DatabaseAnnotationIsRunning = "databases.scalingo.com/db-is-running"
 // Meta data: annotations and status conditions.
 
 func IsDatabaseInitialized(conditions []metav1.Condition) bool {
-	return meta.IsStatusConditionFalse(conditions, string(DatabaseStatusConditionAvailable))
+	return meta.FindStatusCondition(conditions, string(DatabaseStatusConditionAvailable)) != nil
 }
 
 func IsDatabaseProvisioning(conditions []metav1.Condition) bool {

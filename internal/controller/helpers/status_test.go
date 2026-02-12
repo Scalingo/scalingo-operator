@@ -18,19 +18,19 @@ func TestIsDatabaseInitialized(t *testing.T) {
 		require.True(t, IsDatabaseInitialized(conditions))
 	})
 
-	t.Run("returns false when Available condition is true", func(t *testing.T) {
+	t.Run("returns true when Available condition is true", func(t *testing.T) {
 		conditions := []metav1.Condition{
 			{
 				Type:   string(DatabaseStatusConditionAvailable),
 				Status: metav1.ConditionTrue,
 			},
 		}
-		require.False(t, IsDatabaseInitialized(conditions))
+		require.True(t, IsDatabaseInitialized(conditions))
 	})
 
 	t.Run("returns false when Available condition does not exist", func(t *testing.T) {
 		conditions := []metav1.Condition{}
-		require.False(t, IsDatabaseAvailable(conditions))
+		require.False(t, IsDatabaseInitialized(conditions))
 	})
 }
 
