@@ -2,4 +2,7 @@ package helpers
 
 import "time"
 
-const RequeueDelay = 30 * time.Second
+const (
+	RequeueShortDelay = 1 * time.Second
+	RequeueLongDelay  = 30 * time.Second
+)

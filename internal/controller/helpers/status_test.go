@@ -7,6 +7,87 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func TestIsDatabaseInitialized(t *testing.T) {
+	t.Run("returns true when Available condition is false", func(t *testing.T) {
+		conditions := []metav1.Condition{
+			{
+				Type:   string(DatabaseStatusConditionAvailable),
+				Status: metav1.ConditionFalse,
+			},
+		}
+		require.True(t, IsDatabaseInitialized(conditions))
+	})
+
+	t.Run("returns true when Available condition is true", func(t *testing.T) {
+		conditions := []metav1.Condition{
+			{
+				Type:   string(DatabaseStatusConditionAvailable),
+				Status: metav1.ConditionTrue,
+			},
+		}
+		require.True(t, IsDatabaseInitialized(conditions))
+	})
+
+	t.Run("returns false when Available condition does not exist", func(t *testing.T) {
+		conditions := []metav1.Condition{}
+		require.False(t, IsDatabaseInitialized(conditions))
+	})
+}
+
+func TestIsDatabaseProvisioning(t *testing.T) {
+	t.Run("returns true when Provisioning condition is true", func(t *testing.T) {
+		conditions := []metav1.Condition{
+			{
+				Type:   string(DatabaseStatusConditionProvisioning),
+				Status: metav1.ConditionTrue,
+			},
+		}
+		require.True(t, IsDatabaseProvisioning(conditions))
+	})
+
+	t.Run("returns false when Provisioning condition is false", func(t *testing.T) {
+		conditions := []metav1.Condition{
+			{
+				Type:   string(DatabaseStatusConditionProvisioning),
+				Status: metav1.ConditionFalse,
+			},
+		}
+		require.False(t, IsDatabaseProvisioning(conditions))
+	})
+
+	t.Run("returns false when Provisioning condition does not exist", func(t *testing.T) {
+		conditions := []metav1.Condition{}
+		require.False(t, IsDatabaseProvisioning(conditions))
+	})
+}
+
+func TestIsDatabaseAvailable(t *testing.T) {
+	t.Run("returns true when Available condition is true", func(t *testing.T) {
+		conditions := []metav1.Condition{
+			{
+				Type:   string(DatabaseStatusConditionAvailable),
+				Status: metav1.ConditionTrue,
+			},
+		}
+		require.True(t, IsDatabaseAvailable(conditions))
+	})
+
+	t.Run("returns false when Available condition is false", func(t *testing.T) {
+		conditions := []metav1.Condition{
+			{
+				Type:   string(DatabaseStatusConditionAvailable),
+				Status: metav1.ConditionFalse,
+			},
+		}
+		require.False(t, IsDatabaseAvailable(conditions))
+	})
+
+	t.Run("returns false when Available condition does not exist", func(t *testing.T) {
+		conditions := []metav1.Condition{}
+		require.False(t, IsDatabaseAvailable(conditions))
+	})
+}
+
 func TestIsDatabaseRunning(t *testing.T) {
 	t.Run("returns true when annotation exists and is true", func(t *testing.T) {
 		dbMeta := metav1.ObjectMeta{
@@ -54,78 +135,21 @@ func TestIsDatabaseDeletionRequested(t *testing.T) {
 	})
 }
 
-func TestIsDatabaseAvailable(t *testing.T) {
-	t.Run("returns true when Available condition is true", func(t *testing.T) {
-		conditions := []metav1.Condition{
-			{
-				Type:   string(DatabaseStatusConditionAvailable),
-				Status: metav1.ConditionTrue,
-			},
-		}
-		require.True(t, IsDatabaseAvailable(conditions))
-	})
-
-	t.Run("returns false when Available condition is false", func(t *testing.T) {
-		conditions := []metav1.Condition{
-			{
-				Type:   string(DatabaseStatusConditionAvailable),
-				Status: metav1.ConditionFalse,
-			},
-		}
-		require.False(t, IsDatabaseAvailable(conditions))
-	})
-
-	t.Run("returns false when Available condition does not exist", func(t *testing.T) {
-		conditions := []metav1.Condition{}
-		require.False(t, IsDatabaseAvailable(conditions))
-	})
-}
-
-func TestIsDatabaseProvisioning(t *testing.T) {
-	t.Run("returns true when Provisioning condition is true", func(t *testing.T) {
-		conditions := []metav1.Condition{
-			{
-				Type:   string(DatabaseStatusConditionProvisioning),
-				Status: metav1.ConditionTrue,
-			},
-		}
-		require.True(t, IsDatabaseProvisioning(conditions))
-	})
-
-	t.Run("returns false when Provisioning condition is false", func(t *testing.T) {
-		conditions := []metav1.Condition{
-			{
-				Type:   string(DatabaseStatusConditionProvisioning),
-				Status: metav1.ConditionFalse,
-			},
-		}
-		require.False(t, IsDatabaseProvisioning(conditions))
-	})
-
-	t.Run("returns false when Provisioning condition does not exist", func(t *testing.T) {
-		conditions := []metav1.Condition{}
-		require.False(t, IsDatabaseProvisioning(conditions))
-	})
-}
-
-func TestSetDatabaseInitialState(t *testing.T) {
-	t.Run("sets initial state correctly", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
+func TestSetDatabaseInitialStatus(t *testing.T) {
+	t.Run("sets initial status correctly", func(t *testing.T) {
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseInitialState(dbMeta, conditions)
+		SetDatabaseInitialStatus(conditions)
 
-		require.Equal(t, "false", dbMeta.Annotations[DatabaseAnnotationIsRunning])
 		require.Len(t, *conditions, 2)
 		require.False(t, IsDatabaseAvailable(*conditions))
 		require.False(t, IsDatabaseProvisioning(*conditions))
 	})
 
 	t.Run("sets correct reasons and messages", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseInitialState(dbMeta, conditions)
+		SetDatabaseInitialStatus(conditions)
 
 		require.Equal(t, reasonNotAvailable, (*conditions)[0].Reason)
 		require.Equal(t, msgNotAvailable, (*conditions)[0].Message)
@@ -165,22 +189,19 @@ func TestSetDatabaseStatusProvisioning(t *testing.T) {
 
 func TestSetDatabaseStatusProvisioned(t *testing.T) {
 	t.Run("sets provisioned status correctly", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseStatusProvisioned(dbMeta, conditions)
+		SetDatabaseStatusProvisioned(conditions)
 
-		require.Equal(t, "true", dbMeta.Annotations[DatabaseAnnotationIsRunning])
 		require.Len(t, *conditions, 2)
 		require.True(t, IsDatabaseAvailable(*conditions))
 		require.False(t, IsDatabaseProvisioning(*conditions))
 	})
 
 	t.Run("sets correct reasons and messages", func(t *testing.T) {
-		dbMeta := &metav1.ObjectMeta{}
 		conditions := &[]metav1.Condition{}
 
-		SetDatabaseStatusProvisioned(dbMeta, conditions)
+		SetDatabaseStatusProvisioned(conditions)
 
 		require.Len(t, *conditions, 2)
 		for _, cond := range *conditions {
@@ -193,5 +214,45 @@ func TestSetDatabaseStatusProvisioned(t *testing.T) {
 				require.Equal(t, msgProvisioned, cond.Message)
 			}
 		}
+	})
+}
+
+func TestSetDatabaseIsNotRunning(t *testing.T) {
+	t.Run("creates and sets isRunning annotation to false", func(t *testing.T) {
+		dbMeta := metav1.ObjectMeta{}
+		SetDatabaseIsNotRunning(&dbMeta)
+		require.False(t, IsDatabaseRunning(dbMeta))
+	})
+
+	t.Run("modifies isRunning annotation to false", func(t *testing.T) {
+		dbMeta := metav1.ObjectMeta{
+			Annotations: map[string]string{
+				DatabaseAnnotationIsRunning: "true",
+			},
+		}
+		require.True(t, IsDatabaseRunning(dbMeta))
+
+		SetDatabaseIsNotRunning(&dbMeta)
+		require.False(t, IsDatabaseRunning(dbMeta))
+	})
+}
+
+func TestSetDatabaseIsRunning(t *testing.T) {
+	t.Run("creates and sets isRunning annotation to true", func(t *testing.T) {
+		dbMeta := metav1.ObjectMeta{}
+		SetDatabaseIsRunning(&dbMeta)
+		require.True(t, IsDatabaseRunning(dbMeta))
+	})
+
+	t.Run("modifies isRunning annotation to true", func(t *testing.T) {
+		dbMeta := metav1.ObjectMeta{
+			Annotations: map[string]string{
+				DatabaseAnnotationIsRunning: "false",
+			},
+		}
+		require.False(t, IsDatabaseRunning(dbMeta))
+
+		SetDatabaseIsRunning(&dbMeta)
+		require.True(t, IsDatabaseRunning(dbMeta))
 	})
 }

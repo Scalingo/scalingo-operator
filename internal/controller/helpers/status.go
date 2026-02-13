@@ -11,6 +11,18 @@ const DatabaseAnnotationIsRunning = "databases.scalingo.com/db-is-running"
 // Helper functions to read and modify operator status through its
 // Meta data: annotations and status conditions.
 
+func IsDatabaseInitialized(conditions []metav1.Condition) bool {
+	return meta.FindStatusCondition(conditions, string(DatabaseStatusConditionAvailable)) != nil
+}
+
+func IsDatabaseProvisioning(conditions []metav1.Condition) bool {
+	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionProvisioning))
+}
+
+func IsDatabaseAvailable(conditions []metav1.Condition) bool {
+	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionAvailable))
+}
+
 func IsDatabaseRunning(dbMeta metav1.ObjectMeta) bool {
 	return metav1.HasAnnotation(dbMeta, DatabaseAnnotationIsRunning) &&
 		dbMeta.Annotations[DatabaseAnnotationIsRunning] == annotationValueTrue
@@ -20,17 +32,7 @@ func IsDatabaseDeletionRequested(dbMeta metav1.ObjectMeta) bool {
 	return !dbMeta.DeletionTimestamp.IsZero()
 }
 
-func IsDatabaseAvailable(conditions []metav1.Condition) bool {
-	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionAvailable))
-}
-
-func IsDatabaseProvisioning(conditions []metav1.Condition) bool {
-	return meta.IsStatusConditionTrue(conditions, string(DatabaseStatusConditionProvisioning))
-}
-
-func SetDatabaseInitialState(dbMeta *metav1.ObjectMeta, conditions *[]metav1.Condition) {
-	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueFalse)
-
+func SetDatabaseInitialStatus(conditions *[]metav1.Condition) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:    string(DatabaseStatusConditionAvailable),
 		Status:  metav1.ConditionFalse,
@@ -55,9 +57,7 @@ func SetDatabaseStatusProvisioning(conditions *[]metav1.Condition) {
 	})
 }
 
-func SetDatabaseStatusProvisioned(dbMeta *metav1.ObjectMeta, conditions *[]metav1.Condition) {
-	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueTrue)
-
+func SetDatabaseStatusProvisioned(conditions *[]metav1.Condition) {
 	meta.SetStatusCondition(conditions, metav1.Condition{
 		Type:    string(DatabaseStatusConditionAvailable),
 		Status:  metav1.ConditionTrue,
@@ -70,6 +70,14 @@ func SetDatabaseStatusProvisioned(dbMeta *metav1.ObjectMeta, conditions *[]metav
 		Reason:  reasonProvisioned,
 		Message: msgProvisioned,
 	})
+}
+
+func SetDatabaseIsNotRunning(dbMeta *metav1.ObjectMeta) {
+	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueFalse)
+}
+
+func SetDatabaseIsRunning(dbMeta *metav1.ObjectMeta) {
+	metav1.SetMetaDataAnnotation(dbMeta, DatabaseAnnotationIsRunning, annotationValueTrue)
 }
 
 // Private constants.
