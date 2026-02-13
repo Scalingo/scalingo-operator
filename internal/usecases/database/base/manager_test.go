@@ -48,7 +48,7 @@ func TestManager_CreateDatabase(t *testing.T) {
 		dbRequested := domain.Database{
 			Name: "PG test",
 			Type: domain.DatabaseTypePostgreSQL,
-			Plan: "postgresql-ng-enterprise-4096",
+			Plan: "postgresql-dr-enterprise-4096",
 		}
 
 		dbCreated := dbRequested
@@ -90,7 +90,7 @@ func TestManager_GetDatabase(t *testing.T) {
 			AddonID: addonID,
 			Name:    "PG test",
 			Type:    domain.DatabaseTypePostgreSQL,
-			Plan:    "postgresql-ng-enterprise-4096",
+			Plan:    "postgresql-dr-enterprise-4096",
 		}
 
 		scClient.EXPECT().GetDatabase(ctx, databaseID).Return(db, nil)

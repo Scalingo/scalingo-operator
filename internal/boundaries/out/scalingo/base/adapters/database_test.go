@@ -1,4 +1,4 @@
-package scalingo
+package adapters
 
 import (
 	"testing"
@@ -31,7 +31,7 @@ func TestToScalingoProviderId(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			res, err := toScalingoProviderId(test.dbType)
+			res, err := ToScalingoProviderId(test.dbType)
 
 			if test.isExpectedError {
 				require.ErrorContains(t, err, "no matching provider for ")
@@ -92,7 +92,7 @@ func TestToDatabase(t *testing.T) {
 				TypeName: "invalid_type",
 			},
 		}
-		_, err := toDatabase(ctx, db)
+		_, err := ToDatabase(ctx, db)
 
 		require.ErrorContains(t, err, "invalid database type")
 	})
@@ -106,7 +106,7 @@ func TestToDatabase(t *testing.T) {
 				Status:   "unknown_status",
 			},
 		}
-		_, err := toDatabase(ctx, db)
+		_, err := ToDatabase(ctx, db)
 
 		require.ErrorContains(t, err, "unknown database status unknown_status")
 	})
@@ -144,7 +144,7 @@ func TestToDatabase(t *testing.T) {
 			Plan:   dbPlan,
 		}
 
-		res, err := toDatabase(ctx, db)
+		res, err := ToDatabase(ctx, db)
 
 		require.NoError(t, err)
 		require.Equal(t, expectedDB, res)

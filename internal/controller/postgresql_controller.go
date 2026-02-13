@@ -205,14 +205,16 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		log.Info("Update database")
 
 		err := dbManager.UpdateDatabase(ctx, postgresql.Status.ScalingoDatabaseID, expectedDB)
-		if err != nil {
+		if errors.Is(err, domain.ErrProvisioning) {
+			log.Info("Waiting for database being provisioned")
+
+			origStatus = postgresql.DeepCopy()
+			helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
+		} else if err != nil {
 			log.Error(err, "Update database", "database", expectedDB)
+
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s", expectedDB.Name)
 		}
-
-		origStatus = postgresql.DeepCopy()
-		helpers.SetDatabaseStatusProvisioned(&postgresql.Status.Conditions)
-
 	case isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
 		// Wait for database creation.
 		currentDB, err := dbManager.GetDatabase(ctx, postgresql.Status.ScalingoDatabaseID)

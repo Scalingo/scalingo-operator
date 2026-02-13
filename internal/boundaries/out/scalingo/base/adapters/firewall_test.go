@@ -1,4 +1,4 @@
-package scalingo
+package adapters
 
 import (
 	"testing"
@@ -25,7 +25,7 @@ func TestToFirewallRule(t *testing.T) {
 			Label: "custom-label",
 		}
 
-		result, err := toFirewallRule(t.Context(), scalingoRule)
+		result, err := ToFirewallRule(t.Context(), scalingoRule)
 
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
@@ -46,7 +46,7 @@ func TestToFirewallRule(t *testing.T) {
 			RangeID: "range-789",
 		}
 
-		result, err := toFirewallRule(t.Context(), scalingoRule)
+		result, err := ToFirewallRule(t.Context(), scalingoRule)
 
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
@@ -60,7 +60,7 @@ func TestToFirewallRule(t *testing.T) {
 			Label: "custom-label",
 		}
 
-		_, err := toFirewallRule(t.Context(), scalingoRule)
+		_, err := ToFirewallRule(t.Context(), scalingoRule)
 
 		require.ErrorContains(t, err, "to firewall rule type: invalid type new unknown range")
 	})
@@ -122,7 +122,7 @@ func TestToScalingoFirewallRuleType(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			result, err := toScalingoFirewallRuleType(t.Context(), test.domainType)
+			result, err := ToScalingoFirewallRuleType(t.Context(), test.domainType)
 			if test.expectedError != "" {
 				require.ErrorContains(t, err, test.expectedError)
 			} else {

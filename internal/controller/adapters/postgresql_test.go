@@ -16,7 +16,7 @@ func TestPostgreSQLToDatabase(t *testing.T) {
 	const (
 		resourceName = "my-resource-name"
 		dbName       = "my-dbng-name"
-		dbPlan       = "postgresql-ng-enterprise-4096"
+		dbPlan       = "postgresql-dr-enterprise-4096"
 		projectID    = "prj-88888888-4444-4444-4444-cccccccccccc"
 	)
 
