@@ -210,9 +210,9 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 			origStatus = postgresql.DeepCopy()
 			helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
-
 		} else if err != nil {
 			log.Error(err, "Update database", "database", expectedDB)
+
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s", expectedDB.Name)
 		}
 	case isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
