@@ -256,10 +256,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Apply triggered updates and requeue later.
 	if origStatus != nil {
-		log.Info("Patch resource status", "statusConditions", postgresql.Status.Conditions)
-		err := r.Status().Patch(ctx, &postgresql, client.MergeFrom(origStatus))
+		log.Info("Update resource status", "statusConditions", postgresql.Status.Conditions)
+		err := r.Status().Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource status")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "update database resource status")
 		}
 	}
 
