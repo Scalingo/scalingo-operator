@@ -16,7 +16,7 @@ func (m *manager) updateDatabasePlan(ctx context.Context, currentDB domain.Datab
 		return errors.Newf(ctx, "invalid status %s for plan update", currentDB.Plan)
 	}
 
-	err := m.scClient.UpdateDatabasePlan(ctx, expectedDB)
+	err := m.scClient.UpdateDatabasePlan(ctx, currentDB.ID, expectedDB.Plan)
 	if err != nil {
 		return errors.Wrap(ctx, err, "update database plan")
 	}

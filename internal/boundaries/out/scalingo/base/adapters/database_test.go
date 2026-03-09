@@ -115,16 +115,18 @@ func TestToDatabase(t *testing.T) {
 		ctx := t.Context()
 
 		const (
-			dbID   = "db_id"
-			dbName = "db_name"
-			dbPlan = "db_plan_name"
-			appID  = "app_id"
+			dbID         = "db_id"
+			dbName       = "db_name"
+			dbPlan       = "db_plan_name"
+			appID        = "app_id"
+			dbTechnology = "db_technology"
 		)
 
 		db := scalingoapi.DatabaseNG{
-			ID:   dbID,
-			Name: dbName,
-			Plan: dbPlan,
+			ID:         dbID,
+			Name:       dbName,
+			Technology: dbTechnology,
+			Plan:       dbPlan,
 			Database: scalingoapi.Database{
 				ID:       dbID,
 				TypeName: "postgresql",
@@ -136,12 +138,13 @@ func TestToDatabase(t *testing.T) {
 		}
 
 		expectedDB := domain.Database{
-			ID:     dbID,
-			AppID:  appID,
-			Name:   dbName,
-			Type:   domain.DatabaseTypePostgreSQL,
-			Status: domain.DatabaseStatusRunning,
-			Plan:   dbPlan,
+			ID:         dbID,
+			AppID:      appID,
+			Name:       dbName,
+			Technology: dbTechnology,
+			Type:       domain.DatabaseTypePostgreSQL,
+			Status:     domain.DatabaseStatusRunning,
+			Plan:       dbPlan,
 		}
 
 		res, err := ToDatabase(ctx, db)

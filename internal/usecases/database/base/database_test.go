@@ -21,7 +21,10 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 			scClient: scClient,
 		}
 
-		currentDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
+		currentDB := domain.Database{
+			ID:   databaseID,
+			Plan: "postgresql-dr-enterprise-4096",
+		}
 		expectedDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
 
 		err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
@@ -39,6 +42,7 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		}
 
 		currentDB := domain.Database{
+			ID:     databaseID,
 			Plan:   "postgresql-dr-enterprise-2048",
 			Status: domain.DatabaseStatusProvisioning,
 		}
@@ -59,12 +63,13 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		}
 
 		currentDB := domain.Database{
+			ID:     databaseID,
 			Plan:   "postgresql-dr-enterprise-2048",
 			Status: domain.DatabaseStatusRunning,
 		}
 		expectedDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
 
-		scClient.EXPECT().UpdateDatabasePlan(ctx, expectedDB).Return(nil)
+		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB.ID, expectedDB.Plan).Return(nil)
 
 		err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
 		require.ErrorIs(t, err, domain.ErrProvisioning)
@@ -87,7 +92,7 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		expectedDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
 
 		expectedErr := domain.ErrProvisioning
-		scClient.EXPECT().UpdateDatabasePlan(ctx, expectedDB).Return(expectedErr)
+		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB.ID, expectedDB.Plan).Return(expectedErr)
 
 		err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
 		require.Error(t, err)
