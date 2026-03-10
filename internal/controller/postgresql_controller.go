@@ -120,7 +120,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		triggerUpdate = true
 	}
 
-	// Apply triggered resource updates.
+	// Apply triggered resource updates with short delay requeue.
 	switch {
 	case triggerStatusUpdate:
 		err := r.Status().Update(ctx, &postgresql)
@@ -132,7 +132,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	case triggerUpdate:
 		err := r.Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "update database resource")
 		}
 		return ctrl.Result{RequeueAfter: helpers.RequeueShortDelay}, nil
 	}

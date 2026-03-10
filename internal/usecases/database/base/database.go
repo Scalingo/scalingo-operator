@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 
-	"github.com/Scalingo/go-utils/errors/v2"
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
@@ -13,7 +13,7 @@ func (m *manager) updateDatabasePlan(ctx context.Context, db domain.Database, ex
 	}
 
 	if db.Status != domain.DatabaseStatusRunning {
-		return db.Status, errors.Newf(ctx, "invalid status %s for plan update", db.Plan)
+		return db.Status, errors.Newf(ctx, "invalid status %s for plan update", db.Status)
 	}
 
 	dbStatus, err := m.scClient.UpdateDatabasePlan(ctx, db, expectedDB.Plan)
