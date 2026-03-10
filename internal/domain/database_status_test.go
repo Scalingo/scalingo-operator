@@ -16,5 +16,6 @@ func TestDatabaseStatus_Validate(t *testing.T) {
 	t.Run("it returns error for unknown status", func(t *testing.T) {
 		require.ErrorContains(t, DatabaseStatus("").Validate(), "invalid database status")
 		require.ErrorContains(t, DatabaseStatus("unknown").Validate(), "invalid database status")
+		require.ErrorContains(t, DatabaseStatusUnknown.Validate(), "invalid database status")
 	})
 }

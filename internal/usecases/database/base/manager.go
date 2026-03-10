@@ -84,7 +84,7 @@ func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domai
 func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) (domain.DatabaseStatus, error) {
 	db, err := m.GetDatabase(ctx, dbID)
 	if err != nil {
-		return db.Status, errors.Wrapf(ctx, err, "unreachable database %s", dbID)
+		return domain.DatabaseStatusUnknown, errors.Wrapf(ctx, err, "unreachable database %s", dbID)
 	}
 
 	// An `m.updateInternetAccess` full implementation is available in this PR:

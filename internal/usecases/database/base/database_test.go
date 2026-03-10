@@ -32,7 +32,6 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		dbStatus, err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
 		require.NoError(t, err)
 		require.Equal(t, currentDB.Status, dbStatus)
-
 	})
 
 	t.Run("it returns error if database status is not running", func(t *testing.T) {
