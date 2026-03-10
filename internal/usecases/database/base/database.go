@@ -7,19 +7,19 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-func (m *manager) updateDatabasePlan(ctx context.Context, currentDB domain.Database, expectedDB domain.Database) error {
-	if currentDB.Plan == expectedDB.Plan {
-		return nil
+func (m *manager) updateDatabasePlan(ctx context.Context, db domain.Database, expectedDB domain.Database) (domain.DatabaseStatus, error) {
+	if db.Plan == expectedDB.Plan {
+		return db.Status, nil
 	}
 
-	if currentDB.Status != domain.DatabaseStatusRunning {
-		return errors.Newf(ctx, "invalid status %s for plan update", currentDB.Plan)
+	if db.Status != domain.DatabaseStatusRunning {
+		return db.Status, errors.Newf(ctx, "invalid status %s for plan update", db.Plan)
 	}
 
-	err := m.scClient.UpdateDatabasePlan(ctx, currentDB.ID, expectedDB.Plan)
+	dbStatus, err := m.scClient.UpdateDatabasePlan(ctx, db, expectedDB.Plan)
 	if err != nil {
-		return errors.Wrap(ctx, err, "update database plan")
+		return db.Status, errors.Wrap(ctx, err, "update database plan")
 	}
 
-	return domain.ErrProvisioning
+	return dbStatus, nil
 }

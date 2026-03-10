@@ -81,29 +81,29 @@ func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domai
 	}, nil
 }
 
-func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) error {
-	currentDB, err := m.GetDatabase(ctx, dbID)
+func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) (domain.DatabaseStatus, error) {
+	db, err := m.GetDatabase(ctx, dbID)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "unreachable database %s", dbID)
+		return db.Status, errors.Wrapf(ctx, err, "unreachable database %s", dbID)
 	}
 
 	// An `m.updateInternetAccess` full implementation is available in this PR:
 	// https://github.com/Scalingo/scalingo-operator/pull/22
 
-	err = m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
+	err = m.updateFirewallRules(ctx, db, expectedDB.FireWallRules)
 	if err != nil {
-		return errors.Wrap(ctx, err, "update firewall rules")
+		return db.Status, errors.Wrap(ctx, err, "update firewall rules")
 	}
 
-	if currentDB.Status == domain.DatabaseStatusProvisioning {
-		return nil // Next updates can not occur while provisioning.
+	if db.Status == domain.DatabaseStatusProvisioning {
+		return db.Status, nil // Next updates can not occur while provisioning.
 	}
 
-	err = m.updateDatabasePlan(ctx, currentDB, expectedDB)
+	dbStatus, err := m.updateDatabasePlan(ctx, db, expectedDB)
 	if err != nil {
-		return errors.Wrap(ctx, err, "update database plan")
+		return db.Status, errors.Wrap(ctx, err, "update database plan")
 	}
-	return nil
+	return dbStatus, nil
 }
 
 func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {

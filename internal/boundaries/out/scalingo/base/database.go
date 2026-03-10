@@ -49,30 +49,25 @@ func (c *client) GetDatabase(ctx context.Context, dbID string) (domain.Database,
 	return db, nil
 }
 
-func (c *client) UpdateDatabasePlan(ctx context.Context, dbID, expectedPlan string) error {
-	currentDB, err := c.GetDatabase(ctx, dbID)
-	if err != nil {
-		return errors.Wrap(ctx, err, "get database")
-	}
-
-	if expectedPlan == currentDB.Plan {
+func (c *client) UpdateDatabasePlan(ctx context.Context, db domain.Database, expectedPlan string) (domain.DatabaseStatus, error) {
+	if expectedPlan == db.Plan {
 		// Plan should be checked before this method.
-		return errors.Wrapf(ctx, domain.ErrNothingToBeDone, "already on plan %s", currentDB.Plan)
+		return db.Status, errors.Wrapf(ctx, domain.ErrNothingToBeDone, "already on plan %s", db.Plan)
 	}
 
-	planID, err := c.findPlanID(ctx, currentDB.Technology, expectedPlan)
+	planID, err := c.findPlanID(ctx, db.Technology, expectedPlan)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "invalid database plan %s", expectedPlan)
+		return db.Status, errors.Wrapf(ctx, err, "invalid database plan %s", expectedPlan)
 	}
 
-	_, err = c.scClient.AddonUpgrade(ctx, currentDB.AppID, currentDB.AddonID, scalingoapi.AddonUpgradeParams{
+	_, err = c.scClient.AddonUpgrade(ctx, db.AppID, db.AddonID, scalingoapi.AddonUpgradeParams{
 		PlanID: planID,
 	})
 	if err != nil {
-		return errors.Wrapf(ctx, err, "addon upgrade plan %s", expectedPlan)
+		return db.Status, errors.Wrapf(ctx, err, "addon upgrade plan %s", expectedPlan)
 	}
 
-	return nil
+	return domain.DatabaseStatusProvisioning, nil
 }
 
 func (c *client) DeleteDatabase(ctx context.Context, dbID string) error {

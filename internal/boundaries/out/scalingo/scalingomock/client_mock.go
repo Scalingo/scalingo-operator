@@ -138,11 +138,12 @@ func (mr *MockClientMockRecorder) ListFirewallRules(arg0, arg1, arg2 interface{}
 }
 
 // UpdateDatabasePlan mocks base method.
-func (m *MockClient) UpdateDatabasePlan(arg0 context.Context, arg1, arg2 string) error {
+func (m *MockClient) UpdateDatabasePlan(arg0 context.Context, arg1 domain.Database, arg2 string) (domain.DatabaseStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateDatabasePlan", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(domain.DatabaseStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateDatabasePlan indicates an expected call of UpdateDatabasePlan.

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -22,13 +23,16 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		}
 
 		currentDB := domain.Database{
-			ID:   databaseID,
-			Plan: "postgresql-dr-enterprise-4096",
+			ID:     databaseID,
+			Plan:   "postgresql-dr-enterprise-4096",
+			Status: domain.DatabaseStatusRunning,
 		}
 		expectedDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
 
-		err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
+		dbStatus, err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
 		require.NoError(t, err)
+		require.Equal(t, currentDB.Status, dbStatus)
+
 	})
 
 	t.Run("it returns error if database status is not running", func(t *testing.T) {
@@ -48,7 +52,7 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		}
 		expectedDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
 
-		err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
+		_, err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
 		require.ErrorContains(t, err, "invalid status")
 	})
 
@@ -69,10 +73,11 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		}
 		expectedDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
 
-		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB.ID, expectedDB.Plan).Return(nil)
+		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB, expectedDB.Plan).Return(domain.DatabaseStatusProvisioning, nil)
 
-		err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
-		require.ErrorIs(t, err, domain.ErrProvisioning)
+		dbStatus, err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, dbStatus)
 	})
 
 	t.Run("it returns error if scClient.UpdateDatabasePlan fails", func(t *testing.T) {
@@ -91,10 +96,9 @@ func TestManager_updateDatabasePlan(t *testing.T) {
 		}
 		expectedDB := domain.Database{Plan: "postgresql-dr-enterprise-4096"}
 
-		expectedErr := domain.ErrProvisioning
-		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB.ID, expectedDB.Plan).Return(expectedErr)
+		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB, expectedDB.Plan).Return(currentDB.Status, errors.New("provisioning"))
 
-		err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
+		_, err := manager.updateDatabasePlan(ctx, currentDB, expectedDB)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "update database plan")
 	})
