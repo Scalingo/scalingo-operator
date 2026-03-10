@@ -75,9 +75,9 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Trigger variables.
 	var (
-		orig         *databasesv1alpha1.PostgreSQL // Trigger resource update.
-		origStatus   *databasesv1alpha1.PostgreSQL // Trigger resource status update.
-		requeueLater time.Duration                 // Trigger requeue for later.
+		triggerUpdate       bool
+		triggerStatusUpdate bool
+		triggerRequeueLater time.Duration
 	)
 
 	// Initialization and resource updates.
@@ -103,34 +103,34 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	case !isDatabaseStatusInitialized:
 		log.Info("Initialize resource status conditions")
 
-		origStatus = postgresql.DeepCopy()
 		helpers.SetDatabaseInitialStatus(&postgresql.Status.Conditions)
+		triggerStatusUpdate = true
 
 	case isDatabaseStatusInitialized && !hasRunningAnnotation:
 		log.Info("Initialize resource annotations")
 
-		orig = postgresql.DeepCopy()
 		helpers.SetDatabaseIsNotRunning(&postgresql.ObjectMeta)
+		triggerUpdate = true
 
 	case isDatabaseAvailable && !isDatabaseRunning:
 		// Update running annotation.
 		log.Info("Update database resource running annotation")
 
-		orig = postgresql.DeepCopy()
 		helpers.SetDatabaseIsRunning(&postgresql.ObjectMeta)
+		triggerUpdate = true
 	}
 
-	// Apply triggered updates + requeue.
+	// Apply triggered resource updates.
 	switch {
-	case origStatus != nil:
-		err := r.Status().Patch(ctx, &postgresql, client.MergeFrom(origStatus))
+	case triggerStatusUpdate:
+		err := r.Status().Update(ctx, &postgresql)
 		if err != nil {
-			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource status")
+			return ctrl.Result{}, errors.Wrap(ctx, err, "update database resource status")
 		}
 		return ctrl.Result{RequeueAfter: helpers.RequeueShortDelay}, nil
 
-	case orig != nil:
-		err := r.Patch(ctx, &postgresql, client.MergeFrom(orig))
+	case triggerUpdate:
+		err := r.Update(ctx, &postgresql)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "patch database resource")
 		}
@@ -194,11 +194,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "create database %s", expectedDB.Name)
 		}
 
-		origStatus = postgresql.DeepCopy()
 		postgresql.Status.ScalingoDatabaseID = newDB.ID
 		helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
-
-		requeueLater = helpers.RequeueLongDelay
+		triggerStatusUpdate = true
+		triggerRequeueLater = helpers.RequeueLongDelay
 
 	case isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
 		// Update database.
@@ -212,8 +211,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 		if dbStatus == domain.DatabaseStatusProvisioning {
 			log.Info("Waiting for database being provisioned")
-			origStatus = postgresql.DeepCopy()
 			helpers.SetDatabaseStatusProvisioning(&postgresql.Status.Conditions)
+			triggerStatusUpdate = true
 		}
 
 	case isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
@@ -226,8 +225,8 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if currentDB.Status == domain.DatabaseStatusRunning {
 			log.Info("Database is provisioned")
 
-			origStatus = postgresql.DeepCopy()
 			helpers.SetDatabaseStatusProvisioned(&postgresql.Status.Conditions)
+			triggerStatusUpdate = true
 
 			// Write connection info in secret
 			dbURL, err := dbManager.GetDatabaseURL(ctx, currentDB)
@@ -247,26 +246,25 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
 			}
+			triggerRequeueLater = helpers.RequeueShortDelay // Requeue for the is running annotation.
 
-			requeueLater = helpers.RequeueShortDelay // Requeue for the is running annotation.
 		} else {
 			log.Info("Waiting for database being provisioned")
-			requeueLater = helpers.RequeueLongDelay
+			triggerRequeueLater = helpers.RequeueLongDelay
 		}
 	}
 
-	// Apply triggered updates and requeue later.
-	if origStatus != nil {
+	// Apply triggered resource updates and requeue later.
+	if triggerStatusUpdate {
 		log.Info("Update resource status", "statusConditions", postgresql.Status.Conditions)
 		err := r.Status().Update(ctx, &postgresql)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "update database resource status")
 		}
 	}
-
-	if requeueLater > 0 {
-		log.Info("Requeue after", "delay", requeueLater)
-		return ctrl.Result{RequeueAfter: requeueLater}, nil
+	if triggerRequeueLater > 0 {
+		log.Info("Requeue after", "delay", triggerRequeueLater)
+		return ctrl.Result{RequeueAfter: triggerRequeueLater}, nil
 	}
 
 	log.Info("Ready")
