@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Scalingo/go-utils/errors/v3"
-
 	apiv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )

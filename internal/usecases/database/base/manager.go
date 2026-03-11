@@ -6,7 +6,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	errors "github.com/Scalingo/go-utils/errors/v3"
-
 	scalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
 	scalingobase "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo/base"
 	"github.com/Scalingo/scalingo-operator/internal/domain"

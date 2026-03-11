@@ -4,11 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
-
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 

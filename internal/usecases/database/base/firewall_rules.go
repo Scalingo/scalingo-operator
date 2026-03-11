@@ -5,7 +5,6 @@ import (
 	"slices"
 
 	"golang.org/x/sync/errgroup"
-
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	errors "github.com/Scalingo/go-utils/errors/v3"
