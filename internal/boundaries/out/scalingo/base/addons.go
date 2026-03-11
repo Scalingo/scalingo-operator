@@ -12,8 +12,8 @@ import (
 // Taken from `cli` project:
 // https://github.com/Scalingo/cli/blob/093b3f099210a9f1a5a1bab49980b94576c299b9/detect/app.go#L23
 func (c *client) getAddonIDFromDatabase(ctx context.Context, databaseName string) (string, error) {
-	// AddonsList works for both apps and DBNG databases (same API endpoint).
-	// A DBNG database is modeled as an app with a single addon (itself),
+	// AddonsList works for both apps and Dedicated Resource (DR) databases (same API endpoint).
+	// A DR database is modeled as an app with a single addon (itself),
 	// whereas an application can have multiple addons (postgresql, redis, etc.).
 	// If multiple addons are returned, the ID is likely an application, not a database.
 	addons, err := c.scClient.AddonsList(ctx, databaseName)
