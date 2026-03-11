@@ -25,7 +25,7 @@ spec:
         - type: "managed_range"
           range_id: "man-osc-fr1-egress"
 
-  name: my-dbng-name
-  plan: postgresql-ng-enterprise-4096
+  name: my-db-name
+  plan: postgresql-dr-enterprise-4096
   region: osc-fr1
   projectID: prj-88888888-4444-4444-4444-cccccccccccc

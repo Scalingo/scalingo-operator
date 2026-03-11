@@ -6,7 +6,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	errors "github.com/Scalingo/go-utils/errors/v3"
-
 	scalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
 	scalingobase "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo/base"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
@@ -81,16 +80,29 @@ func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domai
 	}, nil
 }
 
-func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) error {
-	currentDB, err := m.GetDatabase(ctx, dbID)
+func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) (domain.DatabaseStatus, error) {
+	db, err := m.GetDatabase(ctx, dbID)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "unreachable database %s", dbID)
+		return domain.DatabaseStatusUnknown, errors.Wrapf(ctx, err, "get database %s", dbID)
 	}
 
 	// An `m.updateInternetAccess` full implementation is available in this PR:
 	// https://github.com/Scalingo/scalingo-operator/pull/22
 
-	return m.updateFirewallRules(ctx, currentDB, expectedDB.FireWallRules)
+	err = m.updateFirewallRules(ctx, db, expectedDB.FireWallRules)
+	if err != nil {
+		return db.Status, errors.Wrap(ctx, err, "update firewall rules")
+	}
+
+	if db.Status == domain.DatabaseStatusProvisioning {
+		return db.Status, nil // Next updates can not occur while provisioning.
+	}
+
+	dbStatus, err := m.updateDatabasePlan(ctx, db, expectedDB)
+	if err != nil {
+		return db.Status, errors.Wrap(ctx, err, "update database plan")
+	}
+	return dbStatus, nil
 }
 
 func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {

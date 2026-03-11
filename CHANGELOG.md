@@ -2,6 +2,7 @@
 
 ## To Be Released
 
+* feat: apply plan updates
 * fix: avoid resource update conflicts during reconcile
 * feat: use CR `meta.name` as default database name
 

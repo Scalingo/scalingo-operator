@@ -8,6 +8,7 @@ const (
 	DatabaseStatusRunning      DatabaseStatus = "running"
 	DatabaseStatusProvisioning DatabaseStatus = "provisioning"
 	DatabaseStatusStopped      DatabaseStatus = "stopped"
+	DatabaseStatusUnknown      DatabaseStatus = "unknown"
 )
 
 func (s DatabaseStatus) Validate() error {

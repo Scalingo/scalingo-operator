@@ -64,7 +64,7 @@ var _ = Describe("PostgreSQL Controller", func() {
 							Name: "postgresql-conn-info",
 						},
 						Name:   "my-postgresql-db",
-						Plan:   "postgresql-ng-enterprise-4096",
+						Plan:   "postgresql-dr-enterprise-4096",
 						Region: "osc-st-fr1",
 					},
 				}

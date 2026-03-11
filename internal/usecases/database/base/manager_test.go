@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -48,7 +49,7 @@ func TestManager_CreateDatabase(t *testing.T) {
 		dbRequested := domain.Database{
 			Name: "PG test",
 			Type: domain.DatabaseTypePostgreSQL,
-			Plan: "postgresql-ng-enterprise-4096",
+			Plan: "postgresql-dr-enterprise-4096",
 		}
 
 		dbCreated := dbRequested
@@ -90,7 +91,7 @@ func TestManager_GetDatabase(t *testing.T) {
 			AddonID: addonID,
 			Name:    "PG test",
 			Type:    domain.DatabaseTypePostgreSQL,
-			Plan:    "postgresql-ng-enterprise-4096",
+			Plan:    "postgresql-dr-enterprise-4096",
 		}
 
 		scClient.EXPECT().GetDatabase(ctx, databaseID).Return(db, nil)
@@ -175,6 +176,92 @@ func TestManager_DeleteDatabase(t *testing.T) {
 		err := manager.DeleteDatabase(ctx, databaseID)
 		// Then
 		require.NoError(t, err)
+	})
+}
+
+func TestManager_UpdateDatabase(t *testing.T) {
+	t.Run("it fails when getting database", func(t *testing.T) {
+		// Given
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{
+			scClient: scClient,
+		}
+
+		scClient.EXPECT().GetDatabase(ctx, databaseID).Return(domain.Database{}, errors.New("boom"))
+
+		// When
+		status, err := manager.UpdateDatabase(ctx, databaseID, domain.Database{})
+
+		// Then
+		require.Equal(t, domain.DatabaseStatusUnknown, status)
+		require.ErrorContains(t, err, "get database")
+	})
+
+	t.Run("it updates firewall rules only when database is provisioning", func(t *testing.T) {
+		// Given
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{
+			scClient: scClient,
+		}
+
+		currentDB := domain.Database{
+			ID:      databaseID,
+			AddonID: addonID,
+			Plan:    "postgresql-dr-enterprise-2048",
+			Status:  domain.DatabaseStatusProvisioning,
+		}
+		expectedDB := domain.Database{
+			Plan: "postgresql-dr-enterprise-4096",
+		}
+
+		scClient.EXPECT().GetDatabase(ctx, databaseID).Return(currentDB, nil)
+		scClient.EXPECT().ListFirewallRules(ctx, databaseID, addonID).Return(nil, nil)
+
+		// When
+		status, err := manager.UpdateDatabase(ctx, databaseID, expectedDB)
+
+		// Then
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
+	})
+
+	t.Run("it updates plan when database is running", func(t *testing.T) {
+		// Given
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{
+			scClient: scClient,
+		}
+
+		currentDB := domain.Database{
+			ID:      databaseID,
+			AddonID: addonID,
+			Plan:    "postgresql-dr-enterprise-2048",
+			Status:  domain.DatabaseStatusRunning,
+		}
+		expectedDB := domain.Database{
+			Plan: "postgresql-dr-enterprise-4096",
+		}
+
+		scClient.EXPECT().GetDatabase(ctx, databaseID).Return(currentDB, nil)
+		scClient.EXPECT().ListFirewallRules(ctx, databaseID, addonID).Return(nil, nil)
+		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB, expectedDB.Plan).
+			Return(domain.DatabaseStatusProvisioning, nil)
+
+		// When
+		status, err := manager.UpdateDatabase(ctx, databaseID, expectedDB)
+
+		// Then
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
 	})
 }
 
