@@ -10,7 +10,7 @@ import (
 
 func TestClient_UpdateDatabasePlan(t *testing.T) {
 	t.Run("it fails if current plan is the same as expected", func(t *testing.T) {
-		const dbPlan = "postgresql-ng-enterprise-4096"
+		const dbPlan = "postgresql-dr-enterprise-4096"
 
 		currentDB := domain.Database{
 			Plan: dbPlan,
