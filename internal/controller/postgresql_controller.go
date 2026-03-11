@@ -216,7 +216,14 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 	case isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
-		// Wait for database creation.
+		// Keep applying compatible updates (e.g firewall rules) while the database is provisioning.
+		_, err := dbManager.UpdateDatabase(ctx, postgresql.Status.ScalingoDatabaseID, expectedDB)
+		if err != nil {
+			log.Error(err, "Update database while provisioning", "database", expectedDB)
+			return ctrl.Result{}, errors.Wrapf(ctx, err, "update database %s while provisioning", expectedDB.Name)
+		}
+
+		// Wait for database creation/plan update completion.
 		currentDB, err := dbManager.GetDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
 		if err != nil {
 			return ctrl.Result{}, errors.Wrapf(ctx, err, "get current database %s", postgresql.Status.ScalingoDatabaseID)
