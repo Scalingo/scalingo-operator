@@ -10,7 +10,7 @@ import (
 )
 
 func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain.Database, error) {
-	addonProviderID, err := adapters.ToScalingoProviderId(db.Type)
+	addonProviderID, err := adapters.ToScalingoProviderID(db.Type)
 	if err != nil {
 		return domain.Database{}, errors.Wrap(ctx, err, "create database")
 	}

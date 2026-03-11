@@ -9,7 +9,7 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-func TestToScalingoProviderId(t *testing.T) {
+func TestToScalingoProviderID(t *testing.T) {
 	tests := map[string]struct {
 		dbType             domain.DatabaseType
 		scalingoProviderId string
@@ -23,7 +23,7 @@ func TestToScalingoProviderId(t *testing.T) {
 			dbType:          domain.DatabaseType("unknown"),
 			isExpectedError: true,
 		},
-		"it successfully extract PostgreSQL Scalingo addon provier ID": {
+		"it successfully extract PostgreSQL Scalingo addon provider ID": {
 			dbType:             domain.DatabaseTypePostgreSQL,
 			scalingoProviderId: postgresqlAddonProviderID,
 		},
@@ -31,7 +31,7 @@ func TestToScalingoProviderId(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			res, err := ToScalingoProviderId(test.dbType)
+			res, err := ToScalingoProviderID(test.dbType)
 
 			if test.isExpectedError {
 				require.ErrorContains(t, err, "no matching provider for ")

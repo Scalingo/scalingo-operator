@@ -11,7 +11,7 @@ import (
 
 const postgresqlAddonProviderID = "postgresql-ng"
 
-func ToScalingoProviderId(dbType domain.DatabaseType) (string, error) {
+func ToScalingoProviderID(dbType domain.DatabaseType) (string, error) {
 	switch dbType {
 	case domain.DatabaseTypePostgreSQL:
 		return postgresqlAddonProviderID, nil
@@ -38,7 +38,7 @@ func ToDatabase(ctx context.Context, db scalingoapi.DatabaseNG) (domain.Database
 	var dbType domain.DatabaseType
 	var dbStatus domain.DatabaseStatus
 
-	// Freshly created databases come with empty Database subobject.
+	// Freshly created databases come with empty Database sub-object.
 	// There is neither type nor status to read from empty Database.
 	if db.Database.ID != "" {
 		dbType = domain.DatabaseType(db.Database.TypeName)
