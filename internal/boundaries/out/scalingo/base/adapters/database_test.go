@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	scalingoapi "github.com/Scalingo/go-scalingo/v9"
+	scalingoapi "github.com/Scalingo/go-scalingo/v10"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
