@@ -94,10 +94,10 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 	return m.updateDatabaseWithProvisioning(ctx, db, expectedDB)
 }
 
-// updateDatabaseWithNoProvisioning applies updates that do NOT require provisioning,
+// applyInstantDatabaseUpdates applies updates that do NOT require provisioning,
 // such as firewall rules update.
 // These updates are applied instantly or within few seconds.
-func (m *manager) updateDatabaseWithNoProvisioning(ctx context.Context, db, expectedDB domain.Database) error {
+func (m *manager) applyInstantDatabaseUpdates(ctx context.Context, db, expectedDB domain.Database) error {
 	// An `m.updateInternetAccess` full implementation is available in this PR:
 	// https://github.com/Scalingo/scalingo-operator/pull/22
 
