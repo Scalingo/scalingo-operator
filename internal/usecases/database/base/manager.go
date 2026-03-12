@@ -86,7 +86,7 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 		return domain.DatabaseStatusUnknown, errors.Wrapf(ctx, err, "get database %s", dbID)
 	}
 
-	err = m.updateDatabaseWithNoProvisioning(ctx, db, expectedDB)
+	err = m.applyInstantDatabaseUpdates(ctx, db, expectedDB)
 	if err != nil {
 		return db.Status, err
 	}
@@ -98,7 +98,7 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 // such as firewall rules update.
 // These updates are applied instantly or within few seconds.
 func (m *manager) applyInstantDatabaseUpdates(ctx context.Context, db, expectedDB domain.Database) error {
-	// An `m.updateInternetAccess` full implementation is available in this PR:
+	// Note: a `m.updateInternetAccess` implementation is available in this PR:
 	// https://github.com/Scalingo/scalingo-operator/pull/22
 
 	err := m.updateFirewallRules(ctx, db, expectedDB.FireWallRules)
