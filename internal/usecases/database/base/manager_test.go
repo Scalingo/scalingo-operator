@@ -151,34 +151,6 @@ func TestManager_GetDatabaseURL(t *testing.T) {
 	})
 }
 
-func TestManager_DeleteDatabase(t *testing.T) {
-	t.Run("it fails because of empty ID", func(t *testing.T) {
-		ctx := t.Context()
-		manager := manager{}
-		err := manager.DeleteDatabase(ctx, "")
-
-		require.EqualError(t, err, "empty database id")
-	})
-
-	t.Run("it successfully deletes database", func(t *testing.T) {
-		// Given
-		ctx := t.Context()
-		ctrl := gomock.NewController(t)
-		scClient := scalingomock.NewMockClient(ctrl)
-
-		manager := manager{
-			scClient: scClient,
-		}
-
-		scClient.EXPECT().DeleteDatabase(ctx, databaseID).Return(nil)
-
-		// When
-		err := manager.DeleteDatabase(ctx, databaseID)
-		// Then
-		require.NoError(t, err)
-	})
-}
-
 func TestManager_UpdateDatabase(t *testing.T) {
 	t.Run("it fails when getting database", func(t *testing.T) {
 		// Given
@@ -213,7 +185,7 @@ func TestManager_UpdateDatabase(t *testing.T) {
 		currentDB := domain.Database{
 			ID:      databaseID,
 			AddonID: addonID,
-			Plan:    "postgresql-dr-enterprise-2048",
+			Plan:    "postgresql-dr-starter-4096",
 			Status:  domain.DatabaseStatusProvisioning,
 		}
 		expectedDB := domain.Database{
@@ -262,6 +234,93 @@ func TestManager_UpdateDatabase(t *testing.T) {
 		// Then
 		require.NoError(t, err)
 		require.Equal(t, domain.DatabaseStatusProvisioning, status)
+	})
+}
+
+func TestManager_updateDatabaseWithProvisioning(t *testing.T) {
+	t.Run("it does nothing if database is provisioning", func(t *testing.T) {
+		// Given
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{
+			scClient: scClient,
+		}
+
+		currentDB := domain.Database{
+			Status: domain.DatabaseStatusProvisioning,
+			Plan:   "postgresql-dr-enterprise-4096",
+		}
+
+		expectedDB := domain.Database{
+			Plan: "postgresql-dr-enterprise-8192",
+		}
+
+		// When
+		status, err := manager.updateDatabaseWithProvisioning(ctx, currentDB, expectedDB)
+
+		// Then
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
+	})
+
+	t.Run("it updates the database if not provisioning", func(t *testing.T) {
+		// Given
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{
+			scClient: scClient,
+		}
+
+		currentDB := domain.Database{
+			Status: domain.DatabaseStatusRunning,
+			Plan:   "postgresql-dr-enterprise-4096",
+		}
+
+		expectedDB := domain.Database{
+			Plan: "postgresql-dr-enterprise-8192",
+		}
+
+		scClient.EXPECT().UpdateDatabasePlan(ctx, currentDB, expectedDB.Plan).
+			Return(domain.DatabaseStatusProvisioning, nil)
+
+		// When
+		status, err := manager.updateDatabaseWithProvisioning(ctx, currentDB, expectedDB)
+
+		// Then
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseStatusProvisioning, status)
+	})
+}
+
+func TestManager_DeleteDatabase(t *testing.T) {
+	t.Run("it fails because of empty ID", func(t *testing.T) {
+		ctx := t.Context()
+		manager := manager{}
+		err := manager.DeleteDatabase(ctx, "")
+
+		require.EqualError(t, err, "empty database id")
+	})
+
+	t.Run("it successfully deletes database", func(t *testing.T) {
+		// Given
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{
+			scClient: scClient,
+		}
+
+		scClient.EXPECT().DeleteDatabase(ctx, databaseID).Return(nil)
+
+		// When
+		err := manager.DeleteDatabase(ctx, databaseID)
+		// Then
+		require.NoError(t, err)
 	})
 }
 
