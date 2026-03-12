@@ -86,14 +86,32 @@ func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB do
 		return domain.DatabaseStatusUnknown, errors.Wrapf(ctx, err, "get database %s", dbID)
 	}
 
+	err = m.updateDatabaseWithNoProvisioning(ctx, db, expectedDB)
+	if err != nil {
+		return db.Status, err
+	}
+
+	return m.updateDatabaseWithProvisioning(ctx, db, expectedDB)
+}
+
+// updateDatabaseWithNoProvisioning applies updates that do NOT require provisioning,
+// such as firewall rules update.
+// These updates are applied instantly or within few seconds.
+func (m *manager) updateDatabaseWithNoProvisioning(ctx context.Context, db, expectedDB domain.Database) error {
 	// An `m.updateInternetAccess` full implementation is available in this PR:
 	// https://github.com/Scalingo/scalingo-operator/pull/22
 
-	err = m.updateFirewallRules(ctx, db, expectedDB.FireWallRules)
+	err := m.updateFirewallRules(ctx, db, expectedDB.FireWallRules)
 	if err != nil {
-		return db.Status, errors.Wrap(ctx, err, "update firewall rules")
+		return errors.Wrap(ctx, err, "update firewall rules")
 	}
+	return nil
+}
 
+// updateDatabaseWithProvisioning applies one update at once that requires provisioning,
+// such as plan change.
+// These updates generally require minutes to be applied.
+func (m *manager) updateDatabaseWithProvisioning(ctx context.Context, db, expectedDB domain.Database) (domain.DatabaseStatus, error) {
 	if db.Status == domain.DatabaseStatusProvisioning {
 		return db.Status, nil // Next updates can not occur while provisioning.
 	}
