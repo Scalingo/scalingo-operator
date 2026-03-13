@@ -3,7 +3,7 @@ package scalingo
 import (
 	"context"
 
-	scalingoapi "github.com/Scalingo/go-scalingo/v9"
+	scalingoapi "github.com/Scalingo/go-scalingo/v10"
 	errors "github.com/Scalingo/go-utils/errors/v3"
 )
 
