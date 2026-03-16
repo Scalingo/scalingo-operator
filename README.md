@@ -107,6 +107,20 @@ Then deploy using the new database resource descriptor:
 kubectl apply --filename new_database_v1alpha1_postgresql.yaml
 ```
 
+## Modify database
+
+To apply database modification or change, modify the resource descriptor accordingly and use the command:
+```sh
+kubectl apply --filename modified_database_v1alpha1_postgresql.yaml
+```
+
+Since version `1.1.0`, the *firewall rules* are applied and can be modified.
+
+Since version `1.2.0`, the *plan* can be changed. 
+The plan change is a long operation (~20 minutes) and implies provisioning.
+While provisioning, no other plan change is possible.
+
+
 ## Undeploy Database
 
 Use almost the same command than deploy, with the same descriptor file: replace `apply` by `delete`.
