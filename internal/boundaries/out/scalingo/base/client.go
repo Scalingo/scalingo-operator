@@ -11,6 +11,9 @@ import (
 const (
 	stagingRegion  = "osc-st-fr1"
 	stagingAuthURL = "https://auth.st-sc.fr"
+
+	localRegion  = "local"
+	localAuthURL = "http://172.17.0.1:1234"
 )
 
 type client struct {
@@ -27,9 +30,12 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 		Region:   region,
 	}
 
-	// Ease execution on Staging.
-	if region == stagingRegion {
+	// Auth endpoints for Staging and Local environments.
+	switch region {
+	case stagingRegion:
 		cfg.AuthEndpoint = stagingAuthURL
+	case localRegion:
+		cfg.AuthEndpoint = localAuthURL
 	}
 
 	scClient, err := scalingoapi.New(ctx, cfg)
