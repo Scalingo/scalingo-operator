@@ -35,7 +35,7 @@ func (c *client) getAddonIDFromDatabase(ctx context.Context, databaseName string
 // findPlanID retrieves a plan ID from its name by calling the API.
 //
 // Taken from `cli` project:
-// https://github.com/Scalingo/cli/blob/master/utils/plans.go#L11
+// https://github.com/Scalingo/cli/blob/682777b4936fab6106cccf139095b6f6805978c5/utils/plans.go#L11
 func (c *client) findPlanID(ctx context.Context, addonID, planName string) (string, error) {
 	plans, err := c.scClient.AddonProviderPlansList(ctx, addonID, scalingoapi.AddonProviderPlansListOpts{})
 	if err != nil {
