@@ -114,9 +114,9 @@ To apply database modification or change, modify the resource descriptor accordi
 kubectl apply --filename modified_database_v1alpha1_postgresql.yaml
 ```
 
-Since version `1.1.0`, the *firewall rules* are applied and can be modified.
+Since version `v1.1.0-alpha1`, the *firewall rules* are applied and can be modified.
 
-Since version `1.2.0`, the *plan* can be changed. 
+Since version `v1.2.0-alpha1`, the *plan* can be changed. 
 The plan change is a long operation (~20 minutes) and implies provisioning.
 While provisioning, no other plan change is possible.
 
