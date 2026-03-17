@@ -1,0 +1,38 @@
+# Custom Resource example
+#
+# Use your own values for these fields:
+# * metadata.name
+# * spec.name
+# * spec.connInfoSecretTarget.name
+#
+apiVersion: databases.scalingo.com/v1alpha1
+kind: PostgreSQL
+metadata:
+  labels:
+    app.kubernetes.io/name: scalingo-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: postgresql-sample
+spec:
+  authSecret:
+    name: scalingo
+    key: api_token
+  connInfoSecretTarget:
+    name: my-postgresql-secret
+    
+  networking:
+    internet_access:
+      enabled: true
+    firewall:
+      rules:
+        - type: "custom_range"
+          cidr: "192.168.0.0/24"
+        - type: "custom_range"
+          cidr: "192.168.1.1/32"
+        - type: "custom_range"
+          cidr: "192.168.1.2/32"
+        - type: "custom_range"
+          cidr: "192.168.1.3/32"
+
+  name: my-postgresql-database
+  plan: postgresql-dr-starter-4096
+  region: osc-fr1
