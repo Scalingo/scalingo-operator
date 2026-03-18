@@ -303,7 +303,7 @@ Commit, tag and create a new release:
 VERSION="1.2.0-alpha1"
 
 git switch --create release/${VERSION}
-git add CHANGELOG.md README.md config
+git add internal/domain/config.go CHANGELOG.md README.md config
 git commit --message="feat: bump v${VERSION}"
 git push --set-upstream origin release/${VERSION}
 gh pr create --reviewer=scalingo/team-ist --fill-first
