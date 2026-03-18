@@ -37,6 +37,7 @@ import (
 
 	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
 	"github.com/Scalingo/scalingo-operator/internal/controller"
+	"github.com/Scalingo/scalingo-operator/internal/domain"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -86,6 +87,7 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	setupLog.Info("operator version", "version", domain.Version)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will

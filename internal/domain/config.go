@@ -1,6 +1,6 @@
 package domain
 
-const (
-	AppName = "Scalingo Operator"
-	Version = "1.2.0-alpha1"
-)
+const AppName = "Scalingo Operator"
+
+// Version is set at build time using ldflags.
+var Version = "dev"

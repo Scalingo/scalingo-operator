@@ -3,6 +3,7 @@ package scalingo
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	scalingoapi "github.com/Scalingo/go-scalingo/v10"
 	errors "github.com/Scalingo/go-utils/errors/v3"
@@ -27,7 +28,11 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 		return nil, errors.New(ctx, "empty api token")
 	}
 
-	userAgent := fmt.Sprintf("%s v%s", domain.AppName, domain.Version)
+	version := domain.Version
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
+	}
+	userAgent := fmt.Sprintf("%s %s", domain.AppName, version)
 
 	cfg := scalingoapi.ClientConfig{
 		APIToken:  apiToken,
