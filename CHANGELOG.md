@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* feat: use go-scalingo with its own user-agent
+
 ## v1.2.0-alpha1
 
 * feat: apply plan updates
