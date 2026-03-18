@@ -1,4 +1,4 @@
-apiVersion: databases.scalingo.com/v1alpha1
+apiVersion: databases.scalingo.com/v1
 kind: PostgreSQL
 metadata:
   labels:

@@ -16,6 +16,6 @@ resources:
   domain: scalingo.com
   group: databases
   kind: PostgreSQL
-  path: github.com/Scalingo/scalingo-operator/api/v1alpha1
-  version: v1alpha1
+  path: github.com/Scalingo/scalingo-operator/api/v1
+  version: v1
 version: "3"
