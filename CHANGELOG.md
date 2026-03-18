@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* feat: set Scalingo Operator User-Agent on go-scalingo API calls
+
 ## v1.2.0-alpha1
 
 * feat: apply plan updates

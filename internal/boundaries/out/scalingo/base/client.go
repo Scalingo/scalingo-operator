@@ -2,10 +2,13 @@ package scalingo
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	scalingoapi "github.com/Scalingo/go-scalingo/v10"
 	errors "github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
+	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
 const (
@@ -25,9 +28,12 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 		return nil, errors.New(ctx, "empty api token")
 	}
 
+	userAgent := composeUserAgent(domain.Version)
+
 	cfg := scalingoapi.ClientConfig{
-		APIToken: apiToken,
-		Region:   region,
+		APIToken:  apiToken,
+		Region:    region,
+		UserAgent: userAgent,
 	}
 
 	// Auth endpoints for Staging and Local environments.
@@ -46,4 +52,12 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 	return &client{
 		scClient: scClient,
 	}, nil
+}
+
+func composeUserAgent(version string) string {
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
+	}
+
+	return fmt.Sprintf("%s %s", domain.AppName, version)
 }

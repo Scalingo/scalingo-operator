@@ -289,7 +289,6 @@ then, execute `make deploy IMG=...`.
 ## Release a New Version
 
 > [!WARNING]
-> You first need to execute the integration tests on `main` to ensure that everything is working.
 > Add any new supported `spec` in `config/samples/databases_v1alpha1_postgresql.yaml`.
 
 Bump new version number in:
@@ -297,14 +296,13 @@ Bump new version number in:
 - `CHANGELOG.md`,
 - `README.md`: all `VERSION` contents.
 
-
 Commit, tag and create a new release:
 
 ```sh
 VERSION="1.2.0-alpha1"
 
 git switch --create release/${VERSION}
-git add CHANGELOG.md README.md config
+git add .
 git commit --message="feat: bump v${VERSION}"
 git push --set-upstream origin release/${VERSION}
 gh pr create --reviewer=scalingo/team-ist --fill-first
