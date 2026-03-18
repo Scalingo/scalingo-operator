@@ -2,7 +2,7 @@
 
 ## To Be Released
 
-* feat: use go-scalingo with its own user-agent
+* feat: set Scalingo Operator User-Agent on go-scalingo API calls
 
 ## v1.2.0-alpha1
 
