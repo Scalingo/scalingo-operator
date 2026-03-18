@@ -292,7 +292,6 @@ then, execute `make deploy IMG=...`.
 > Add any new supported `spec` in `config/samples/databases_v1alpha1_postgresql.yaml`.
 
 Bump new version number in:
-- `internal/domain/config.go`
 - `config/manager/kustomization.yaml`, field `newTag`, do not forget the prefix `v`,
 - `CHANGELOG.md`,
 - `README.md`: all `VERSION` contents.
