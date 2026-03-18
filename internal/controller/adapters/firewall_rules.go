@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/Scalingo/go-utils/errors/v3"
-	"github.com/Scalingo/scalingo-operator/api/v1alpha1"
+	"github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-func toFirewallRules(ctx context.Context, networkSpec v1alpha1.NetworkingSpec) ([]domain.FirewallRule, error) {
+func toFirewallRules(ctx context.Context, networkSpec v1.NetworkingSpec) ([]domain.FirewallRule, error) {
 	if networkSpec.Firewall == nil || len(networkSpec.Firewall.Rules) == 0 {
 		return nil, nil
 	}
@@ -24,7 +24,7 @@ func toFirewallRules(ctx context.Context, networkSpec v1alpha1.NetworkingSpec) (
 	return newRules, nil
 }
 
-func toFirewallRule(ctx context.Context, rule v1alpha1.FirewallRuleSpec) (domain.FirewallRule, error) {
+func toFirewallRule(ctx context.Context, rule v1.FirewallRuleSpec) (domain.FirewallRule, error) {
 	newRule := domain.FirewallRule{
 		Type:    domain.FirewallRuleType(rule.Type),
 		CIDR:    rule.CIDR,

@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 type AuthSecretSpec struct {
 	// SecretName is the name of the Kubernetes Secret that contains authentication details.

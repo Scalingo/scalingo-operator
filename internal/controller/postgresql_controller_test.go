@@ -30,7 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
+	databasesv1 "github.com/Scalingo/scalingo-operator/api/v1"
 )
 
 var _ = Describe("PostgreSQL Controller", func() {
@@ -44,23 +44,23 @@ var _ = Describe("PostgreSQL Controller", func() {
 			Name:      resourceName,
 			Namespace: namespace,
 		}
-		postgresql := &databasesv1alpha1.PostgreSQL{}
+		postgresql := &databasesv1.PostgreSQL{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind PostgreSQL")
 			err := k8sClient.Get(ctx, typeNamespacedName, postgresql)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &databasesv1alpha1.PostgreSQL{
+				resource := &databasesv1.PostgreSQL{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: namespace,
 					},
-					Spec: databasesv1alpha1.PostgreSQLSpec{
-						AuthSecret: databasesv1alpha1.AuthSecretSpec{
+					Spec: databasesv1.PostgreSQLSpec{
+						AuthSecret: databasesv1.AuthSecretSpec{
 							Name: "scalingo-auth-secret",
 							Key:  "api_token",
 						},
-						ConnInfoSecretTarget: databasesv1alpha1.SecretTargetSpec{
+						ConnInfoSecretTarget: databasesv1.SecretTargetSpec{
 							Name: "postgresql-conn-info",
 						},
 						Name:   "my-postgresql-db",
@@ -87,7 +87,7 @@ var _ = Describe("PostgreSQL Controller", func() {
 
 		AfterEach(func() {
 			// Cleanup logic after each test.
-			resource := &databasesv1alpha1.PostgreSQL{}
+			resource := &databasesv1.PostgreSQL{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 

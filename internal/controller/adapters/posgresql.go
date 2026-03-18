@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/Scalingo/go-utils/errors/v3"
-	apiv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
+	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
 // Convert from Kubebuilder type to internal type.
-func PostgreSQLToDatabase(ctx context.Context, postgresql apiv1alpha1.PostgreSQL) (domain.Database, error) {
+func PostgreSQLToDatabase(ctx context.Context, postgresql apiv1.PostgreSQL) (domain.Database, error) {
 	rules, err := toFirewallRules(ctx, postgresql.Spec.Networking)
 	if err != nil {
 		return domain.Database{}, errors.Wrap(ctx, err, "to firewall rules")

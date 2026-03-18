@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Scalingo/scalingo-operator/api/v1alpha1"
+	"github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
 func TestToFirewallRules(t *testing.T) {
 	t.Run("it returns nil when firewall is nil", func(t *testing.T) {
-		spec := v1alpha1.NetworkingSpec{
+		spec := v1.NetworkingSpec{
 			Firewall: nil,
 		}
 
@@ -22,9 +22,9 @@ func TestToFirewallRules(t *testing.T) {
 	})
 
 	t.Run("it returns nil when rules are empty", func(t *testing.T) {
-		spec := v1alpha1.NetworkingSpec{
-			Firewall: &v1alpha1.FirewallSpec{
-				Rules: []v1alpha1.FirewallRuleSpec{},
+		spec := v1.NetworkingSpec{
+			Firewall: &v1.FirewallSpec{
+				Rules: []v1.FirewallRuleSpec{},
 			},
 		}
 
@@ -35,9 +35,9 @@ func TestToFirewallRules(t *testing.T) {
 	})
 
 	t.Run("it converts single custom_range rule", func(t *testing.T) {
-		spec := v1alpha1.NetworkingSpec{
-			Firewall: &v1alpha1.FirewallSpec{
-				Rules: []v1alpha1.FirewallRuleSpec{
+		spec := v1.NetworkingSpec{
+			Firewall: &v1.FirewallSpec{
+				Rules: []v1.FirewallRuleSpec{
 					{
 						Type:  "custom_range",
 						CIDR:  "192.168.1.0/24",
@@ -58,9 +58,9 @@ func TestToFirewallRules(t *testing.T) {
 	})
 
 	t.Run("it converts single managed_range rule", func(t *testing.T) {
-		spec := v1alpha1.NetworkingSpec{
-			Firewall: &v1alpha1.FirewallSpec{
-				Rules: []v1alpha1.FirewallRuleSpec{
+		spec := v1.NetworkingSpec{
+			Firewall: &v1.FirewallSpec{
+				Rules: []v1.FirewallRuleSpec{
 					{
 						Type:    "managed_range",
 						RangeID: "range-123",
@@ -81,9 +81,9 @@ func TestToFirewallRules(t *testing.T) {
 	})
 
 	t.Run("it converts multiple rules", func(t *testing.T) {
-		spec := v1alpha1.NetworkingSpec{
-			Firewall: &v1alpha1.FirewallSpec{
-				Rules: []v1alpha1.FirewallRuleSpec{
+		spec := v1.NetworkingSpec{
+			Firewall: &v1.FirewallSpec{
+				Rules: []v1.FirewallRuleSpec{
 					{
 						Type:  "custom_range",
 						CIDR:  "10.0.0.0/8",
@@ -115,9 +115,9 @@ func TestToFirewallRules(t *testing.T) {
 	})
 
 	t.Run("it returns error for invalid rule", func(t *testing.T) {
-		spec := v1alpha1.NetworkingSpec{
-			Firewall: &v1alpha1.FirewallSpec{
-				Rules: []v1alpha1.FirewallRuleSpec{
+		spec := v1.NetworkingSpec{
+			Firewall: &v1.FirewallSpec{
+				Rules: []v1.FirewallRuleSpec{
 					{
 						Type: "custom_range",
 						// Missing CIDR
@@ -134,9 +134,9 @@ func TestToFirewallRules(t *testing.T) {
 	})
 
 	t.Run("it returns error when one of multiple rules is invalid", func(t *testing.T) {
-		spec := v1alpha1.NetworkingSpec{
-			Firewall: &v1alpha1.FirewallSpec{
-				Rules: []v1alpha1.FirewallRuleSpec{
+		spec := v1.NetworkingSpec{
+			Firewall: &v1.FirewallSpec{
+				Rules: []v1.FirewallRuleSpec{
 					{
 						Type: "custom_range",
 						CIDR: "10.0.0.0/8",
@@ -159,7 +159,7 @@ func TestToFirewallRules(t *testing.T) {
 
 func TestToFirewallRule(t *testing.T) {
 	t.Run("it converts custom_range rule with all fields", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type:  "custom_range",
 			CIDR:  "192.168.1.0/24",
 			Label: "My Custom Rule",
@@ -176,7 +176,7 @@ func TestToFirewallRule(t *testing.T) {
 	})
 
 	t.Run("it converts custom_range rule without label", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type: "custom_range",
 			CIDR: "10.0.0.0/16",
 		}
@@ -191,7 +191,7 @@ func TestToFirewallRule(t *testing.T) {
 	})
 
 	t.Run("it converts managed_range rule with all fields", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type:    "managed_range",
 			RangeID: "range-789",
 			Label:   "My Managed Rule",
@@ -208,7 +208,7 @@ func TestToFirewallRule(t *testing.T) {
 	})
 
 	t.Run("it converts managed_range rule without label", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type:    "managed_range",
 			RangeID: "range-xyz",
 		}
@@ -223,7 +223,7 @@ func TestToFirewallRule(t *testing.T) {
 	})
 
 	t.Run("it returns error for invalid type", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type: "invalid_type",
 		}
 
@@ -235,7 +235,7 @@ func TestToFirewallRule(t *testing.T) {
 	})
 
 	t.Run("it returns error for custom_range without CIDR", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type:  "custom_range",
 			Label: "Missing CIDR",
 		}
@@ -248,7 +248,7 @@ func TestToFirewallRule(t *testing.T) {
 	})
 
 	t.Run("it returns error for managed_range without RangeID", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type:  "managed_range",
 			Label: "Missing RangeID",
 		}
@@ -261,7 +261,7 @@ func TestToFirewallRule(t *testing.T) {
 	})
 
 	t.Run("it returns error with wrapped context", func(t *testing.T) {
-		spec := v1alpha1.FirewallRuleSpec{
+		spec := v1.FirewallRuleSpec{
 			Type: "custom_range",
 		}
 

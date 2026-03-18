@@ -28,7 +28,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/Scalingo/go-utils/errors/v3"
-	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
+	databasesv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/controller/adapters"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
@@ -56,7 +56,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log := logf.FromContext(ctx)
 
 	// Fetch the instance.
-	var postgresql databasesv1alpha1.PostgreSQL
+	var postgresql databasesv1.PostgreSQL
 	err := r.Get(ctx, req.NamespacedName, &postgresql)
 	if err != nil {
 		// Handle error, if it's not found, there's nothing to do.
@@ -284,7 +284,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PostgreSQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&databasesv1alpha1.PostgreSQL{}).
+		For(&databasesv1.PostgreSQL{}).
 		Named("postgresql").
 		Complete(r)
 }

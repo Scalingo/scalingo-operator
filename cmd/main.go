@@ -35,7 +35,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	databasesv1alpha1 "github.com/Scalingo/scalingo-operator/api/v1alpha1"
+	databasesv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/controller"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 	// +kubebuilder:scaffold:imports
@@ -49,7 +49,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(databasesv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(databasesv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
