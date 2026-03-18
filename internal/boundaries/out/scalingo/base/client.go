@@ -28,11 +28,7 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 		return nil, errors.New(ctx, "empty api token")
 	}
 
-	version := domain.Version
-	if !strings.HasPrefix(version, "v") {
-		version = "v" + version
-	}
-	userAgent := fmt.Sprintf("%s %s", domain.AppName, version)
+	userAgent := composeUserAgent(domain.Version)
 
 	cfg := scalingoapi.ClientConfig{
 		APIToken:  apiToken,
@@ -56,4 +52,12 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 	return &client{
 		scClient: scClient,
 	}, nil
+}
+
+func composeUserAgent(version string) string {
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
+	}
+
+	return fmt.Sprintf("%s %s", domain.AppName, version)
 }
