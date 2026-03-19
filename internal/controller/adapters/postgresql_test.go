@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	databasesv1 "github.com/Scalingo/scalingo-operator/api/v1"
+	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
@@ -19,8 +19,8 @@ func TestPostgreSQLToDatabase(t *testing.T) {
 	)
 
 	t.Run("it converts postgresql data from Kubebuilder to internal format", func(t *testing.T) {
-		pg := databasesv1.PostgreSQL{
-			Spec: databasesv1.PostgreSQLSpec{
+		pg := apiv1.PostgreSQL{
+			Spec: apiv1.PostgreSQLSpec{
 				Name:      dbName,
 				Plan:      dbPlan,
 				ProjectID: projectID,
@@ -39,11 +39,11 @@ func TestPostgreSQLToDatabase(t *testing.T) {
 	})
 
 	t.Run("it fallsback on resource name for missing database name", func(t *testing.T) {
-		pg := databasesv1.PostgreSQL{
+		pg := apiv1.PostgreSQL{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: resourceName,
 			},
-			Spec: databasesv1.PostgreSQLSpec{
+			Spec: apiv1.PostgreSQLSpec{
 				Plan:      dbPlan,
 				ProjectID: projectID,
 			},
