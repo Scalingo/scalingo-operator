@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	domain "github.com/Scalingo/scalingo-operator/internal/domain"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockClient is a mock of Client interface.

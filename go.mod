@@ -1,6 +1,6 @@
 module github.com/Scalingo/scalingo-operator
 
-go 1.26.0
+go 1.26
 
 require (
 	github.com/Scalingo/go-scalingo/v10 v10.0.0
@@ -9,6 +9,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.36.1
 	github.com/stretchr/testify v1.11.1
+	go.uber.org/mock v0.6.0
 	golang.org/x/sync v0.19.0
 	k8s.io/api v0.34.0
 	k8s.io/apimachinery v0.34.0

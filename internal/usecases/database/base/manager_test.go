@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo/scalingomock"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
