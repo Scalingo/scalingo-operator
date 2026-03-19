@@ -1,0 +1,8 @@
+dependencies = ["kubebuilder", "go-scalingo"]
+description = "The Scalingo Operator can deploy and undeploy databases instances hosted on dedicated resources on Scalingo platform from a Kubernetes cluster."
+destination_server = []
+flags = ["cli", "devops", "tools"]
+languages = ["dockerfile", "go"]
+owner = "david.voisin@scalingo.com"
+team = "IST"
+version = "1.1.2"
