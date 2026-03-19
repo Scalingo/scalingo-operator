@@ -14,7 +14,7 @@ spec:
     singular: postgresql
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: PostgreSQL is the Schema for the postgresqls API

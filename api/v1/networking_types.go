@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 type NetworkingSpec struct {
 	// InternetAccess defines the external access through internet.

@@ -19,7 +19,7 @@ Example:
 A CR is an actual instance of the type defined by the CRD.
 
 Example:
-`config/samples/databases_v1alpha1_postgresql.yaml`
+`config/samples/databases_v1_postgresql.yaml`
 
 # Usage
 
@@ -64,7 +64,7 @@ Once the operator is deployed and running, deploy the database resource using it
 
 Using PostgreSQL sample example:
 ```sh
-kubectl apply --filename config/samples/databases_v1alpha1_postgresql.yaml
+kubectl apply --filename config/samples/databases_v1_postgresql.yaml
 ```
 
 ### Read Database URL
@@ -104,14 +104,14 @@ Ensure to use distinct values for these fields in a new database resource descri
 
 Then deploy using the new database resource descriptor:
 ```sh
-kubectl apply --filename new_database_v1alpha1_postgresql.yaml
+kubectl apply --filename new_database_v1_postgresql.yaml
 ```
 
 ## Modify database
 
 To apply database modification or change, modify the resource descriptor accordingly and use the command:
 ```sh
-kubectl apply --filename modified_database_v1alpha1_postgresql.yaml
+kubectl apply --filename modified_database_v1_postgresql.yaml
 ```
 
 Since version `v1.1.0-alpha1`, the *firewall rules* are applied and can be modified.
@@ -127,7 +127,7 @@ Use almost the same command than deploy, with the same descriptor file: replace 
 
 Using PostgreSQL sample example:
 ```sh
-kubectl delete --filename config/samples/databases_v1alpha1_postgresql.yaml
+kubectl delete --filename config/samples/databases_v1_postgresql.yaml
 ```
 
 ## Undeploy the Operator
@@ -203,7 +203,7 @@ These commands were executed to create this operator:
 
 ```sh
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
-kubebuilder create api --group databases --version v1alpha1 --kind PostgreSQL
+kubebuilder create api --group databases --version v1 --kind PostgreSQL
 make manifests
 make install
 ```
@@ -211,7 +211,7 @@ make install
 ### Build Commands
 
 ```sh
-# generate api/v1alpha/zz_generated.deepcopy.go
+# generate api/v1/zz_generated.deepcopy.go
 make generate
 
 # generate the CRD manifests under config/crd/bases and a sample for it under config/samples
@@ -289,7 +289,7 @@ then, execute `make deploy IMG=...`.
 ## Release a New Version
 
 > [!WARNING]
-> Add any new supported `spec` in `config/samples/databases_v1alpha1_postgresql.yaml`.
+> Add any new supported `spec` in `config/samples/databases_v1_postgresql.yaml`.
 
 Bump new version number in:
 - `config/manager/kustomization.yaml`, field `newTag`, do not forget the prefix `v`,

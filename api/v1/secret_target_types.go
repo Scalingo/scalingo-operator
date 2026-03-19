@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 type SecretTargetSpec struct {
 	// The name of the secret to create or update with the connection information.
