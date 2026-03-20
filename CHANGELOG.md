@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v1.2.0
+
 * feat: set Scalingo Operator User-Agent on go-scalingo API calls
 * refactor: replace `github.com/golang/mock` with `go.uber.org/mock`
 
