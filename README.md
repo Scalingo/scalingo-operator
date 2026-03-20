@@ -18,8 +18,10 @@ Example:
 
 A CR is an actual instance of the type defined by the CRD.
 
-Example:
-`config/samples/databases_v1_postgresql.yaml`
+Examples:
+* `config/samples/databases_v1_postgresql.yaml`
+* `doc/examples/custom_resources/cr-postgresql.starter.yaml`
+* `doc/examples/custom_resources/cr-postgresql.enterprise.yaml`
 
 # Usage
 
