@@ -170,8 +170,11 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// Create/update/delete database.
 	switch {
 	case isDatabaseDeletionRequested:
-		// Delete database.
 		log.Info("Delete database")
+
+		if isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID == "" {
+			log.Info("Database provisioning requested but no database created yet, skip database deletion")
+		}
 
 		err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
 		if err != nil {
@@ -185,7 +188,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 	case !isDatabaseAvailable && postgresql.Status.ScalingoDatabaseID == "":
-		// Create database.
 		log.Info("Create database")
 
 		newDB, err := dbManager.CreateDatabase(ctx, expectedDB)
@@ -200,7 +202,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		triggerRequeueLater = helpers.RequeueLongDelay
 
 	case isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
-		// Update database.
 		log.Info("Update database")
 
 		dbStatus, err := dbManager.UpdateDatabase(ctx, postgresql.Status.ScalingoDatabaseID, expectedDB)
