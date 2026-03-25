@@ -32,6 +32,8 @@ spec:
           cidr: "192.168.1.2/32"
         - type: "custom_range"
           cidr: "192.168.1.3/32"
+        - type: "managed_range"
+          range_id: "man-osc-fr1-egress"
 
   name: my-postgresql-database
   plan: postgresql-dr-starter-4096

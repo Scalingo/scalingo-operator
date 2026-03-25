@@ -27,8 +27,6 @@ spec:
         - type: "custom_range"
           cidr: "0.0.0.0/0"
           label: "Allow all"
-        - type: "managed_range"
-          range_id: "man-osc-fr1-egress"
 
   name: my-postgresql-database
   plan: postgresql-dr-starter-4096
