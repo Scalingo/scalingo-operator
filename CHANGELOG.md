@@ -2,6 +2,7 @@
 
 ## To Be Released
 
+* feat(oks-net-peering) Add outscale:oks:net_peering parameter to automatically create oks net peering request acceptation and configure the database to use it
 * build(deps): update to latest major version `github.com/Scalingo/go-scalingo/v11`
 
 ## v1.2.0

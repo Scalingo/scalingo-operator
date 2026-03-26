@@ -133,6 +133,19 @@ spec:
                     required:
                     - enabled
                     type: object
+                  outscale:
+                    description: Outscale defines the Outscale networking configuration.
+                    properties:
+                      oks:
+                        description: OKS defines the Outscale Kubernetes Service networking
+                          configuration.
+                        properties:
+                          net_peering:
+                            description: NetPeering enables Outscale Net Peering management
+                              for the database.
+                            type: boolean
+                        type: object
+                    type: object
                 required:
                 - internet_access
                 type: object

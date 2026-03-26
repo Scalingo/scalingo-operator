@@ -42,3 +42,15 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - oks.dev
+  resources:
+  - netpeeringrequests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

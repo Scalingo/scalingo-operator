@@ -10,6 +10,9 @@ type Manager interface {
 	CreateDatabase(ctx context.Context, db domain.Database) (domain.Database, error)
 	GetDatabase(ctx context.Context, dbID string) (domain.Database, error)
 	GetDatabaseURL(ctx context.Context, db domain.Database) (domain.DatabaseURL, error)
+	GetDatabaseNetworkConfiguration(ctx context.Context, dbID string) (domain.DatabaseNetworkConfiguration, error)
+	EnsureDatabaseNetPeering(ctx context.Context, dbID, outscaleNetPeeringID string) error
+	DeleteDatabaseNetPeerings(ctx context.Context, dbID string) error
 	UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) (domain.DatabaseStatus, error)
 	DeleteDatabase(ctx context.Context, dbID string) error
 }
