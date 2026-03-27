@@ -229,6 +229,9 @@ make install
 # verify using
 kubectl get crd
 
+# set authentication URL (local region example)
+export SCALINGO_AUTH_URL="http://172.17.0.1:1234"
+
 # execute
 make run
 ```
