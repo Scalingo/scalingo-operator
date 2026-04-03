@@ -52,7 +52,8 @@ func (c *client) ListDatabaseNetPeerings(ctx context.Context, dbID string) ([]do
 }
 
 func (c *client) DeleteDatabaseNetPeering(ctx context.Context, dbID, netPeeringID string) error {
-	if err := c.scClient.Preview().DatabaseNetPeeringDestroy(ctx, dbID, netPeeringID); err != nil {
+	err := c.scClient.Preview().DatabaseNetPeeringDestroy(ctx, dbID, netPeeringID)
+	if err != nil {
 		return errors.Wrap(ctx, err, "delete database net peering")
 	}
 	return nil

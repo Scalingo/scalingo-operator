@@ -297,42 +297,40 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	if !isDatabaseDeletionRequested {
-		if !isOutscaleOKSNetPeeringEnabled {
-			log.Info("Outscale OKS net peering disabled, cleanup resources")
+	if !isDatabaseDeletionRequested && !isOutscaleOKSNetPeeringEnabled {
+		log.Info("Outscale OKS net peering disabled, cleanup resources")
 
-			if postgresql.Status.ScalingoDatabaseID != "" {
-				err := dbManager.DeleteDatabaseNetPeerings(ctx, postgresql.Status.ScalingoDatabaseID)
-				if err != nil {
-					return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database net peerings id %s", postgresql.Status.ScalingoDatabaseID)
-				}
-			}
-
-			err = r.deleteNetPeeringRequest(ctx, postgresql)
+		if postgresql.Status.ScalingoDatabaseID != "" {
+			err := dbManager.DeleteDatabaseNetPeerings(ctx, postgresql.Status.ScalingoDatabaseID)
 			if err != nil {
-				return ctrl.Result{}, errors.Wrap(ctx, err, "delete net peering request")
+				return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database net peerings id %s", postgresql.Status.ScalingoDatabaseID)
 			}
-		} else if isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "" {
-			log.Info("Reconcile Outscale OKS net peering")
+		}
 
-			databaseNetworkConfig, err := dbManager.GetDatabaseNetworkConfiguration(ctx, postgresql.Status.ScalingoDatabaseID)
+		err = r.deleteNetPeeringRequest(ctx, postgresql)
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "delete net peering request")
+		}
+	} else if !isDatabaseDeletionRequested && isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "" {
+		log.Info("Reconcile Outscale OKS net peering")
+
+		databaseNetworkConfig, err := dbManager.GetDatabaseNetworkConfiguration(ctx, postgresql.Status.ScalingoDatabaseID)
+		if err != nil {
+			return ctrl.Result{}, errors.Wrapf(ctx, err, "get database network configuration id %s", postgresql.Status.ScalingoDatabaseID)
+		}
+
+		netPeeringID, err := r.reconcileNetPeeringRequest(ctx, postgresql, databaseNetworkConfig.OutscaleNetID, databaseNetworkConfig.OutscaleAccountID)
+		if err != nil {
+			return ctrl.Result{}, errors.Wrap(ctx, err, "reconcile net peering request")
+		}
+
+		if netPeeringID == "" {
+			log.Info("Waiting for NetPeeringRequest to be provisioned")
+			triggerRequeueLater = helpers.RequeueLongDelay
+		} else {
+			err = dbManager.EnsureDatabaseNetPeering(ctx, postgresql.Status.ScalingoDatabaseID, netPeeringID)
 			if err != nil {
-				return ctrl.Result{}, errors.Wrapf(ctx, err, "get database network configuration id %s", postgresql.Status.ScalingoDatabaseID)
-			}
-
-			netPeeringID, err := r.reconcileNetPeeringRequest(ctx, postgresql, databaseNetworkConfig.OutscaleNetID, databaseNetworkConfig.OutscaleAccountID)
-			if err != nil {
-				return ctrl.Result{}, errors.Wrap(ctx, err, "reconcile net peering request")
-			}
-
-			if netPeeringID == "" {
-				log.Info("Waiting for NetPeeringRequest to be provisioned")
-				triggerRequeueLater = helpers.RequeueLongDelay
-			} else {
-				err = dbManager.EnsureDatabaseNetPeering(ctx, postgresql.Status.ScalingoDatabaseID, netPeeringID)
-				if err != nil {
-					return ctrl.Result{}, errors.Wrapf(ctx, err, "ensure database net peering id %s", postgresql.Status.ScalingoDatabaseID)
-				}
+				return ctrl.Result{}, errors.Wrapf(ctx, err, "ensure database net peering id %s", postgresql.Status.ScalingoDatabaseID)
 			}
 		}
 	}
@@ -376,11 +374,13 @@ func (r *PostgreSQLReconciler) reconcileNetPeeringRequest(ctx context.Context, p
 			},
 		}
 
-		if err := controllerutil.SetControllerReference(&postgresql, netPeeringRequest, r.Scheme); err != nil {
+		err = controllerutil.SetControllerReference(&postgresql, netPeeringRequest, r.Scheme)
+		if err != nil {
 			return "", errors.Wrap(ctx, err, "set controller reference")
 		}
 
-		if err := r.Create(ctx, netPeeringRequest); err != nil {
+		err = r.Create(ctx, netPeeringRequest)
+		if err != nil {
 			return "", errors.Wrap(ctx, err, "create net peering request")
 		}
 		return "", nil
