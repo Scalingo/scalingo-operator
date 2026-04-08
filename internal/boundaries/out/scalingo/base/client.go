@@ -3,20 +3,15 @@ package scalingo
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
+
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	scalingoapi "github.com/Scalingo/go-scalingo/v10"
 	errors "github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
-)
-
-const (
-	stagingRegion  = "osc-st-fr1"
-	stagingAuthURL = "https://auth.st-sc.fr"
-
-	localRegion  = "local"
-	localAuthURL = "http://172.17.0.1:1234"
 )
 
 type client struct {
@@ -28,6 +23,8 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 		return nil, errors.New(ctx, "empty api token")
 	}
 
+	log := logf.FromContext(ctx)
+
 	userAgent := composeUserAgent(domain.Version)
 
 	cfg := scalingoapi.ClientConfig{
@@ -36,12 +33,10 @@ func NewClient(ctx context.Context, apiToken, region string) (scalingo.Client, e
 		UserAgent: userAgent,
 	}
 
-	// Auth endpoints for Staging and Local environments.
-	switch region {
-	case stagingRegion:
-		cfg.AuthEndpoint = stagingAuthURL
-	case localRegion:
-		cfg.AuthEndpoint = localAuthURL
+	scalingoAuthURL := os.Getenv("SCALINGO_AUTH_URL")
+	if scalingoAuthURL != "" {
+		log.Info("Set authentication end-point", "URL", scalingoAuthURL, "region", region)
+		cfg.AuthEndpoint = scalingoAuthURL
 	}
 
 	scClient, err := scalingoapi.New(ctx, cfg)
