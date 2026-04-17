@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* build(deps): update to latest major version `github.com/Scalingo/go-scalingo/v11`
+
 ## v1.2.0
 
 * feat: set Scalingo Operator User-Agent on go-scalingo API calls
