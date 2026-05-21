@@ -8,6 +8,25 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
+func (c *client) ListDatabaseEndpoints(ctx context.Context, dbID string) ([]domain.DatabaseEndpoint, error) {
+	endpoints, err := c.scClient.Preview().DatabaseEndpointsList(ctx, dbID)
+	if err != nil {
+		return nil, errors.Wrap(ctx, err, "list database endpoints")
+	}
+
+	result := make([]domain.DatabaseEndpoint, 0, len(endpoints))
+	for _, endpoint := range endpoints {
+		result = append(result, domain.DatabaseEndpoint{
+			ID:         endpoint.ID,
+			DatabaseID: endpoint.DatabaseID,
+			Hostname:   endpoint.Hostname,
+			Port:       endpoint.Port,
+			Type:       domain.DatabaseEndpointType(endpoint.Type),
+		})
+	}
+	return result, nil
+}
+
 func (c *client) GetDatabaseNetworkConfiguration(ctx context.Context, dbID string) (domain.DatabaseNetworkConfiguration, error) {
 	config, err := c.scClient.Preview().DatabaseNetworkConfigurationShow(ctx, dbID)
 	if err != nil {

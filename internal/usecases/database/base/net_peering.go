@@ -20,6 +20,19 @@ func (m *manager) GetDatabaseNetworkConfiguration(ctx context.Context, dbID stri
 	return config, nil
 }
 
+func (m *manager) GetDatabaseEndpoints(ctx context.Context, dbID string) ([]domain.DatabaseEndpoint, error) {
+	if dbID == "" {
+		return nil, errors.New(ctx, "empty database id")
+	}
+
+	endpoints, err := m.scClient.ListDatabaseEndpoints(ctx, dbID)
+	if err != nil {
+		return nil, errors.Wrap(ctx, err, "list database endpoints")
+	}
+
+	return endpoints, nil
+}
+
 func (m *manager) EnsureDatabaseNetPeering(ctx context.Context, dbID, outscaleNetPeeringID string) error {
 	if dbID == "" {
 		return errors.New(ctx, "empty database id")

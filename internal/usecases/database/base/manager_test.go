@@ -185,6 +185,43 @@ func TestManager_GetDatabaseNetworkConfiguration(t *testing.T) {
 	})
 }
 
+func TestManager_GetDatabaseEndpoints(t *testing.T) {
+	t.Run("fails because of empty ID", func(t *testing.T) {
+		ctx := t.Context()
+		manager := manager{}
+		res, err := manager.GetDatabaseEndpoints(ctx, "")
+
+		require.EqualError(t, err, "empty database id")
+		require.Empty(t, res)
+	})
+
+	t.Run("successfully gets database endpoints", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{
+			scClient: scClient,
+		}
+
+		endpoints := []domain.DatabaseEndpoint{
+			{
+				ID:       "endpoint-1",
+				Hostname: "public-host",
+				Port:     5432,
+				Type:     domain.DatabaseEndpointTypePublicRW,
+			},
+		}
+
+		scClient.EXPECT().ListDatabaseEndpoints(ctx, databaseID).Return(endpoints, nil)
+
+		res, err := manager.GetDatabaseEndpoints(ctx, databaseID)
+
+		require.NoError(t, err)
+		require.Equal(t, endpoints, res)
+	})
+}
+
 func TestManager_EnsureDatabaseNetPeering(t *testing.T) {
 	t.Run("it fails because of empty database ID", func(t *testing.T) {
 		ctx := t.Context()

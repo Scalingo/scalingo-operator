@@ -290,6 +290,31 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
 			}
+
+			endpoints, err := dbManager.GetDatabaseEndpoints(ctx, currentDB.ID)
+			if err != nil {
+				return ctrl.Result{}, errors.Wrap(ctx, err, "get database endpoints")
+			}
+
+			for _, endpoint := range endpoints {
+				endpointURL, err := domain.ComposeEndpointConnectionURL(ctx, dbURL.Value, endpoint)
+				if err != nil {
+					return ctrl.Result{}, errors.Wrap(ctx, err, "compose endpoint connection url")
+				}
+
+				endpointConnInfoSecret := domain.Secret{
+					Namespace: req.Namespace,
+					Name:      postgresql.Spec.ConnInfoSecretTarget.Name,
+					Key:       domain.ComposeEndpointConnectionURLName(postgresql.Spec.ConnInfoSecretTarget.Prefix, dbURL.Name, endpoint.Type),
+					Value:     endpointURL,
+				}
+				log.Info("Write endpoint connection info secret", "secret", endpointConnInfoSecret)
+
+				err = secretManager.SetSecret(ctx, endpointConnInfoSecret)
+				if err != nil {
+					return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", endpointConnInfoSecret.Key)
+				}
+			}
 			triggerRequeueLater = helpers.RequeueShortDelay // Requeue for the is running annotation.
 
 		} else {
