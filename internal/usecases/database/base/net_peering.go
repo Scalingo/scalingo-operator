@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 
-	errors "github.com/Scalingo/go-utils/errors/v3"
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
