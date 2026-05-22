@@ -54,3 +54,11 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - oks.dev
+  resources:
+  - netpeerings
+  verbs:
+  - delete
+  - get
+  - list

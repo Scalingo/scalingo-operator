@@ -20,6 +20,19 @@ func (m *manager) GetDatabaseNetworkConfiguration(ctx context.Context, dbID stri
 	return config, nil
 }
 
+func (m *manager) GetDatabaseNetPeerings(ctx context.Context, dbID string) ([]domain.DatabaseNetPeering, error) {
+	if dbID == "" {
+		return nil, errors.New(ctx, "empty database id")
+	}
+
+	netPeerings, err := m.scClient.ListDatabaseNetPeerings(ctx, dbID)
+	if err != nil {
+		return nil, errors.Wrap(ctx, err, "list database net peerings")
+	}
+
+	return netPeerings, nil
+}
+
 func (m *manager) GetDatabaseEndpoints(ctx context.Context, dbID string) ([]domain.DatabaseEndpoint, error) {
 	if dbID == "" {
 		return nil, errors.New(ctx, "empty database id")
@@ -59,21 +72,17 @@ func (m *manager) EnsureDatabaseNetPeering(ctx context.Context, dbID, outscaleNe
 	return nil
 }
 
-func (m *manager) DeleteDatabaseNetPeerings(ctx context.Context, dbID string) error {
+func (m *manager) DeleteDatabaseNetPeering(ctx context.Context, dbID string, netPeeringID string) error {
 	if dbID == "" {
 		return errors.New(ctx, "empty database id")
 	}
-
-	netPeerings, err := m.scClient.ListDatabaseNetPeerings(ctx, dbID)
-	if err != nil {
-		return errors.Wrap(ctx, err, "list database net peerings")
+	if netPeeringID == "" {
+		return errors.New(ctx, "empty net peering id")
 	}
 
-	for _, netPeering := range netPeerings {
-		err = m.scClient.DeleteDatabaseNetPeering(ctx, dbID, netPeering.ID)
-		if err != nil {
-			return errors.Wrapf(ctx, err, "delete database net peering %s", netPeering.ID)
-		}
+	err := m.scClient.DeleteDatabaseNetPeering(ctx, dbID, netPeeringID)
+	if err != nil {
+		return errors.Wrapf(ctx, err, "delete database net peering %s", netPeeringID)
 	}
 	return nil
 }

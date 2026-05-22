@@ -279,16 +279,24 @@ func TestManager_EnsureDatabaseNetPeering(t *testing.T) {
 	})
 }
 
-func TestManager_DeleteDatabaseNetPeerings(t *testing.T) {
-	t.Run("it fails because of empty database ID", func(t *testing.T) {
+func TestManager_DeleteDatabaseNetPeering(t *testing.T) {
+	t.Run("fails because of empty database ID", func(t *testing.T) {
 		ctx := t.Context()
 		manager := manager{}
-		err := manager.DeleteDatabaseNetPeerings(ctx, "")
+		err := manager.DeleteDatabaseNetPeering(ctx, "", "np-1")
 
 		require.EqualError(t, err, "empty database id")
 	})
 
-	t.Run("it deletes all database net peerings", func(t *testing.T) {
+	t.Run("fails because of empty net peering ID", func(t *testing.T) {
+		ctx := t.Context()
+		manager := manager{}
+		err := manager.DeleteDatabaseNetPeering(ctx, databaseID, "")
+
+		require.EqualError(t, err, "empty net peering id")
+	})
+
+	t.Run("deletes database net peering", func(t *testing.T) {
 		ctx := t.Context()
 		ctrl := gomock.NewController(t)
 		scClient := scalingomock.NewMockClient(ctrl)
@@ -297,14 +305,9 @@ func TestManager_DeleteDatabaseNetPeerings(t *testing.T) {
 			scClient: scClient,
 		}
 
-		scClient.EXPECT().ListDatabaseNetPeerings(ctx, databaseID).Return([]domain.DatabaseNetPeering{
-			{ID: "np-1", OutscaleNetPeeringID: "pcx-1234"},
-			{ID: "np-2", OutscaleNetPeeringID: "pcx-5678"},
-		}, nil)
 		scClient.EXPECT().DeleteDatabaseNetPeering(ctx, databaseID, "np-1").Return(nil)
-		scClient.EXPECT().DeleteDatabaseNetPeering(ctx, databaseID, "np-2").Return(nil)
 
-		err := manager.DeleteDatabaseNetPeerings(ctx, databaseID)
+		err := manager.DeleteDatabaseNetPeering(ctx, databaseID, "np-1")
 		require.NoError(t, err)
 	})
 }

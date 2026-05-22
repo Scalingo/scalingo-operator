@@ -1,3 +1,4 @@
 {
-  "internal/boundaries/out/scalingo.Client": "53 ba 6b 44 65 50 06 68 14 12 a4 d1 4c eb 78 88 2f 8d b2 de"
+  "internal/boundaries/out/scalingo.Client": "53 ba 6b 44 65 50 06 68 14 12 a4 d1 4c eb 78 88 2f 8d b2 de",
+  "internal/usecases/database.Manager": "29 1f 39 f5 80 a6 7d cd f6 15 79 62 82 8d 32 94 6e 29 84 8e"
 }
