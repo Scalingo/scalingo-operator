@@ -1,0 +1,31 @@
+# Custom Resource example with Outscale OKS Net Peering
+#
+# Use your own values for these fields:
+# * metadata.name
+# * spec.name
+# * spec.connInfoSecretTarget.name
+#
+apiVersion: databases.scalingo.com/v1
+kind: PostgreSQL
+metadata:
+  labels:
+    app.kubernetes.io/name: scalingo-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: postgresql-sample
+spec:
+  authSecret:
+    name: scalingo
+    key: api_token
+  connInfoSecretTarget:
+    name: my-postgresql-secret
+
+  networking:
+    internet_access:
+      enabled: true
+    outscale:
+      oks:
+        net_peering: true
+
+  name: my-postgresql-database
+  plan: postgresql-dr-starter-4096
+  region: osc-fr1

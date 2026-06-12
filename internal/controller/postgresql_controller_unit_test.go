@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
+	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 	"github.com/Scalingo/scalingo-operator/internal/usecases/database/databasemock"
 )
@@ -105,7 +106,7 @@ func (c *netPeeringResourceClient) Delete(_ context.Context, obj client.Object, 
 
 func newNetPeering(namespace, name, state, accepterNetID, accepterOwnerID string) *unstructured.Unstructured {
 	object := &unstructured.Unstructured{}
-	object.SetGroupVersionKind(netPeeringGVK)
+	object.SetGroupVersionKind(helpers.OutscaleNetPeeringGVK)
 	object.SetNamespace(namespace)
 	object.SetName(name)
 	object.Object["status"] = map[string]any{

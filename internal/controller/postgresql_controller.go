@@ -24,7 +24,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -48,30 +47,6 @@ type PostgreSQLReconciler struct {
 const (
 	netPeeringRequestSuffix = "net-peering-request"
 )
-
-var netPeeringRequestGVK = schema.GroupVersionKind{
-	Group:   "oks.dev",
-	Version: "v1beta",
-	Kind:    "NetPeeringRequest",
-}
-
-var netPeeringRequestListGVK = schema.GroupVersionKind{
-	Group:   "oks.dev",
-	Version: "v1beta",
-	Kind:    "NetPeeringRequestList",
-}
-
-var netPeeringGVK = schema.GroupVersionKind{
-	Group:   "oks.dev",
-	Version: "v1beta",
-	Kind:    "NetPeering",
-}
-
-var netPeeringListGVK = schema.GroupVersionKind{
-	Group:   "oks.dev",
-	Version: "v1beta",
-	Kind:    "NetPeeringList",
-}
 
 // +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls/status,verbs=get;update;patch
@@ -442,10 +417,11 @@ func (r *PostgreSQLReconciler) createOKSNetPeeringRequest(ctx context.Context, d
 	log.Info("Create Outscale NetPeeringRequest resource", "outscaleNetID", databaseNetworkConfig.OutscaleNetID, "outscaleAccountID", databaseNetworkConfig.OutscaleAccountID)
 	now := time.Now().UnixMilli()
 	resourceName := fmt.Sprintf("%s-%s-%d", postgresql.Name, netPeeringRequestSuffix, now)
+	apiVersion, kind := helpers.OutscaleNetPeeringRequestGVK.ToAPIVersionAndKind()
 	netPeeringRequest := &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": "oks.dev/v1beta",
-			"kind":       "NetPeeringRequest",
+			"apiVersion": apiVersion,
+			"kind":       kind,
 			"metadata": map[string]any{
 				"name":      resourceName,
 				"namespace": postgresql.Namespace,
@@ -485,10 +461,6 @@ func (r *PostgreSQLReconciler) deleteNetPeerings(ctx context.Context, dbManager 
 	if err != nil {
 		return errors.Wrap(ctx, err, "list existing net peerings for database")
 	}
-	// No peering to cleanup, skip deletion.
-	if len(netPeerings) == 0 {
-		return nil
-	}
 
 	for _, netPeering := range netPeerings {
 		log = log.WithValues("netPeering", netPeering.GetName())
@@ -513,7 +485,7 @@ func (r *PostgreSQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *PostgreSQLReconciler) listExistingNetPeeringRequestsForDatabase(ctx context.Context, postgresql apiv1.PostgreSQL) ([]unstructured.Unstructured, error) {
 	netPeeringRequests := &unstructured.UnstructuredList{}
-	netPeeringRequests.SetGroupVersionKind(netPeeringRequestListGVK)
+	netPeeringRequests.SetGroupVersionKind(helpers.OutscaleNetPeeringRequestListGVK)
 
 	err := r.List(
 		ctx,
@@ -530,7 +502,7 @@ func (r *PostgreSQLReconciler) listExistingNetPeeringRequestsForDatabase(ctx con
 
 func (r *PostgreSQLReconciler) listExistingNetPeeringsForDatabase(ctx context.Context, dbManager databaseusecases.Manager, postgresql apiv1.PostgreSQL) ([]unstructured.Unstructured, error) {
 	netPeerings := &unstructured.UnstructuredList{}
-	netPeerings.SetGroupVersionKind(netPeeringListGVK)
+	netPeerings.SetGroupVersionKind(helpers.OutscaleNetPeeringListGVK)
 	err := r.List(
 		ctx,
 		netPeerings,
@@ -547,7 +519,7 @@ func (r *PostgreSQLReconciler) listExistingNetPeeringsForDatabase(ctx context.Co
 
 	// Select the net peering from current OKS cluster joined with the database.
 	// This should be unique since there can't be 2 net peerings with the same accepterNetId and accepterOwnerId for a given database.
-	netPeeringsForDatabase := make([]unstructured.Unstructured, 0, 1)
+	netPeeringsForDatabase := []unstructured.Unstructured{}
 	for _, netPeering := range netPeerings.Items {
 		npState, _, _ := unstructured.NestedString(netPeering.Object, "status", "netPeeringState")
 		npAccepterNetId, _, _ := unstructured.NestedString(netPeering.Object, "status", "accepterNetId")
