@@ -18,11 +18,9 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,8 +31,8 @@ import (
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/controller/adapters"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
+	"github.com/Scalingo/scalingo-operator/internal/controller/networking"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
-	databaseusecases "github.com/Scalingo/scalingo-operator/internal/usecases/database"
 	databasebase "github.com/Scalingo/scalingo-operator/internal/usecases/database/base"
 )
 
@@ -43,10 +41,6 @@ type PostgreSQLReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
-
-const (
-	netPeeringRequestSuffix = "net-peering-request"
-)
 
 // +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls/status,verbs=get;update;patch
@@ -177,6 +171,17 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		"running", isDatabaseRunning)
 
 	isOutscaleOKSNetPeeringEnabled := postgresql.Spec.Networking.IsOutscaleOKSNetPeeringEnabled()
+	netPeeringReconciler := networking.NetPeeringReconciler{
+		Client: r.Client,
+		Scheme: r.Scheme,
+	}
+	netPeeringResource := networking.DatabaseResource{
+		Name:       postgresql.Name,
+		Namespace:  postgresql.Namespace,
+		Owner:      &postgresql,
+		DatabaseID: postgresql.Status.ScalingoDatabaseID,
+		Networking: postgresql.Spec.Networking,
+	}
 
 	// Create/update/delete database.
 	switch {
@@ -184,7 +189,7 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		log.Info("Delete database")
 
 		if isOutscaleOKSNetPeeringEnabled {
-			err = r.deleteNetPeerings(ctx, dbManager, postgresql)
+			err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, netPeeringResource)
 			if err != nil {
 				return ctrl.Result{}, errors.Wrap(ctx, err, "delete net peering resources")
 			}
@@ -308,14 +313,16 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	netPeeringRequeue, err := r.reconcileOutscaleOKSNetPeering(
+	netPeeringResource.DatabaseID = postgresql.Status.ScalingoDatabaseID
+	netPeeringRequeue, err := netPeeringReconciler.Reconcile(
 		ctx,
-		postgresql,
 		dbManager,
-		isDatabaseDeletionRequested,
-		isOutscaleOKSNetPeeringEnabled,
-		isDatabaseAvailable,
-		isDatabaseProvisioning,
+		netPeeringResource,
+		networking.DatabaseState{
+			DeletionRequested: isDatabaseDeletionRequested,
+			Available:         isDatabaseAvailable,
+			Provisioning:      isDatabaseProvisioning,
+		},
 	)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -341,206 +348,10 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *PostgreSQLReconciler) reconcileOutscaleOKSNetPeering(
-	ctx context.Context,
-	postgresql apiv1.PostgreSQL,
-	dbManager databaseusecases.Manager,
-	isDatabaseDeletionRequested bool,
-	isOutscaleOKSNetPeeringEnabled bool,
-	isDatabaseAvailable bool,
-	isDatabaseProvisioning bool,
-) (time.Duration, error) {
-	if isDatabaseDeletionRequested {
-		return 0, nil
-	}
-
-	log := logf.FromContext(ctx)
-	if !isOutscaleOKSNetPeeringEnabled {
-		err := r.deleteNetPeerings(ctx, dbManager, postgresql)
-		if err != nil {
-			return 0, errors.Wrap(ctx, err, "delete net peering resources")
-		}
-		return 0, nil
-	}
-
-	if !isDatabaseAvailable || isDatabaseProvisioning || postgresql.Status.ScalingoDatabaseID == "" {
-		return 0, nil
-	}
-
-	log.Info("Reconcile Outscale OKS net peering")
-	netPeeringID, err := r.ensureOKSNetPeeringRequest(ctx, dbManager, postgresql)
-	if err != nil {
-		return 0, errors.Wrap(ctx, err, "reconcile net peering request")
-	}
-
-	if netPeeringID == "" {
-		log.Info("Waiting for NetPeeringRequest to be provisioned")
-		return helpers.RequeueLongDelay, nil
-	}
-
-	err = dbManager.EnsureDatabaseNetPeering(ctx, postgresql.Status.ScalingoDatabaseID, netPeeringID)
-	if err != nil {
-		return 0, errors.Wrapf(ctx, err, "ensure database net peering id %s", postgresql.Status.ScalingoDatabaseID)
-	}
-	return 0, nil
-}
-
-func (r *PostgreSQLReconciler) ensureOKSNetPeeringRequest(ctx context.Context, dbManager databaseusecases.Manager, postgresql apiv1.PostgreSQL) (string, error) {
-	existingNetPeeringRequestsForDatabase, err := r.listExistingNetPeeringRequestsForDatabase(ctx, postgresql)
-	if err != nil {
-		return "", errors.Wrap(ctx, err, "list existing net peering requests for database")
-	}
-
-	netPeeringRequest := &unstructured.Unstructured{}
-	if len(existingNetPeeringRequestsForDatabase) == 0 {
-		netPeeringRequest, err = r.createOKSNetPeeringRequest(ctx, dbManager, postgresql)
-		if err != nil {
-			return "", errors.Wrap(ctx, err, "create net peering request")
-		}
-	} else if len(existingNetPeeringRequestsForDatabase) == 1 {
-		netPeeringRequest = &existingNetPeeringRequestsForDatabase[0]
-	} else {
-		return "", errors.New(ctx, "multiple net peering requests found for database")
-	}
-
-	netPeeringID := extractNetPeeringID(*netPeeringRequest)
-	return netPeeringID, nil
-}
-
-func (r *PostgreSQLReconciler) createOKSNetPeeringRequest(ctx context.Context, dbManager databaseusecases.Manager, postgresql apiv1.PostgreSQL) (*unstructured.Unstructured, error) {
-	log := logf.FromContext(ctx)
-	databaseNetworkConfig, err := dbManager.GetDatabaseNetworkConfiguration(ctx, postgresql.Status.ScalingoDatabaseID)
-	if err != nil {
-		return nil, errors.Wrapf(ctx, err, "get database network configuration id %s", postgresql.Status.ScalingoDatabaseID)
-	}
-
-	log.Info("Create Outscale NetPeeringRequest resource", "outscaleNetID", databaseNetworkConfig.OutscaleNetID, "outscaleAccountID", databaseNetworkConfig.OutscaleAccountID)
-	now := time.Now().UnixMilli()
-	resourceName := fmt.Sprintf("%s-%s-%d", postgresql.Name, netPeeringRequestSuffix, now)
-	apiVersion, kind := helpers.OutscaleNetPeeringRequestGVK.ToAPIVersionAndKind()
-	netPeeringRequest := &unstructured.Unstructured{
-		Object: map[string]any{
-			"apiVersion": apiVersion,
-			"kind":       kind,
-			"metadata": map[string]any{
-				"name":      resourceName,
-				"namespace": postgresql.Namespace,
-				"labels": map[string]any{
-					"app.kubernetes.io/managed-by": "scalingo-operator",
-					"scalingo.com/database-id":     postgresql.Status.ScalingoDatabaseID,
-				},
-			},
-			"spec": map[string]any{
-				"accepterNetId":   databaseNetworkConfig.OutscaleNetID,
-				"accepterOwnerId": databaseNetworkConfig.OutscaleAccountID,
-			},
-		},
-	}
-
-	err = controllerutil.SetControllerReference(&postgresql, netPeeringRequest, r.Scheme)
-	if err != nil {
-		return nil, errors.Wrap(ctx, err, "set controller reference")
-	}
-
-	err = r.Create(ctx, netPeeringRequest)
-	if err != nil {
-		return nil, errors.Wrap(ctx, err, "create net peering request")
-	}
-	log.Info("Outscale NetPeeringRequest resource created")
-
-	return netPeeringRequest, nil
-}
-
-func (r *PostgreSQLReconciler) deleteNetPeerings(ctx context.Context, dbManager databaseusecases.Manager, postgresql apiv1.PostgreSQL) error {
-	log := logf.FromContext(ctx)
-	if postgresql.Status.ScalingoDatabaseID == "" {
-		return nil
-	}
-
-	netPeerings, err := r.listExistingNetPeeringsForDatabase(ctx, dbManager, postgresql)
-	if err != nil {
-		return errors.Wrap(ctx, err, "list existing net peerings for database")
-	}
-
-	for _, netPeering := range netPeerings {
-		log = log.WithValues("netPeering", netPeering.GetName())
-		log.Info("Delete Outscale NetPeering resource")
-		err := r.Delete(ctx, &netPeering)
-		if err != nil {
-			log.Error(err, "Delete net peering resource", "netPeering", netPeering.GetName())
-		}
-		log.Info("Outscale NetPeering resource deleted")
-	}
-
-	return nil
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *PostgreSQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&apiv1.PostgreSQL{}).
 		Named("postgresql").
 		Complete(r)
-}
-
-func (r *PostgreSQLReconciler) listExistingNetPeeringRequestsForDatabase(ctx context.Context, postgresql apiv1.PostgreSQL) ([]unstructured.Unstructured, error) {
-	netPeeringRequests := &unstructured.UnstructuredList{}
-	netPeeringRequests.SetGroupVersionKind(helpers.OutscaleNetPeeringRequestListGVK)
-
-	err := r.List(
-		ctx,
-		netPeeringRequests,
-		client.InNamespace(postgresql.Namespace),
-		client.MatchingLabels{"scalingo.com/database-id": postgresql.Status.ScalingoDatabaseID},
-	)
-	if err != nil {
-		return nil, errors.Wrap(ctx, err, "list net peering requests")
-	}
-
-	return netPeeringRequests.Items, nil
-}
-
-func (r *PostgreSQLReconciler) listExistingNetPeeringsForDatabase(ctx context.Context, dbManager databaseusecases.Manager, postgresql apiv1.PostgreSQL) ([]unstructured.Unstructured, error) {
-	netPeerings := &unstructured.UnstructuredList{}
-	netPeerings.SetGroupVersionKind(helpers.OutscaleNetPeeringListGVK)
-	err := r.List(
-		ctx,
-		netPeerings,
-		client.InNamespace(postgresql.Namespace),
-	)
-	if err != nil {
-		return nil, errors.Wrap(ctx, err, "list net peerings")
-	}
-
-	databaseNetworkConfig, err := dbManager.GetDatabaseNetworkConfiguration(ctx, postgresql.Status.ScalingoDatabaseID)
-	if err != nil {
-		return nil, errors.Wrapf(ctx, err, "get database network configuration id %s", postgresql.Status.ScalingoDatabaseID)
-	}
-
-	// Select the net peering from current OKS cluster joined with the database.
-	// This should be unique since there can't be 2 net peerings with the same accepterNetId and accepterOwnerId for a given database.
-	netPeeringsForDatabase := []unstructured.Unstructured{}
-	for _, netPeering := range netPeerings.Items {
-		npState, _, _ := unstructured.NestedString(netPeering.Object, "status", "netPeeringState")
-		npAccepterNetId, _, _ := unstructured.NestedString(netPeering.Object, "status", "accepterNetId")
-		npAccepterOwnerId, _, _ := unstructured.NestedString(netPeering.Object, "status", "accepterOwnerId")
-
-		if npState == "active" && npAccepterNetId == databaseNetworkConfig.OutscaleNetID && npAccepterOwnerId == databaseNetworkConfig.OutscaleAccountID {
-			netPeeringsForDatabase = append(netPeeringsForDatabase, netPeering)
-		}
-	}
-
-	return netPeeringsForDatabase, nil
-}
-
-func extractNetPeeringID(netPeeringRequest unstructured.Unstructured) string {
-	for _, path := range [][]string{
-		{"status", "netPeeringId"},
-	} {
-		value, found, _ := unstructured.NestedString(netPeeringRequest.Object, path...)
-		if found && value != "" {
-			return value
-		}
-	}
-	return ""
 }
