@@ -5,10 +5,31 @@ type NetworkingSpec struct {
 	// +kubebuilder:validation:Required
 	InternetAccess InternetAccessSpec `json:"internet_access"`
 
+	// Outscale defines the Outscale networking configuration.
+	// +optional
+	Outscale *OutscaleSpec `json:"outscale,omitempty"`
+
 	// Firewall defines the firewall rules.
 	// +optional
 	Firewall *FirewallSpec `json:"firewall,omitempty"`
 }
+
+func (s NetworkingSpec) IsOutscaleOKSNetPeeringEnabled() bool {
+	return s.Outscale != nil && s.Outscale.OKS != nil && s.Outscale.OKS.NetPeering
+}
+
+type OutscaleSpec struct {
+	// OKS defines the Outscale Kubernetes Service networking configuration.
+	// +optional
+	OKS *OutscaleOKSSpec `json:"oks,omitempty"`
+}
+
+type OutscaleOKSSpec struct {
+	// NetPeering enables Outscale Net Peering management for the database.
+	// +optional
+	NetPeering bool `json:"net_peering,omitempty"`
+}
+
 type InternetAccessSpec struct {
 	// Enabled enables external access.
 	// +kubebuilder:validation:Required

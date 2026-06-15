@@ -4,6 +4,10 @@
     {
       "interface": "Client",
       "src_package": "internal/boundaries/out/scalingo"
+    },
+    {
+      "interface": "Manager",
+      "src_package": "internal/usecases/database"
     }
   ]
 }

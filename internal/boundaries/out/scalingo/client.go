@@ -13,6 +13,11 @@ type Client interface {
 	GetDatabase(ctx context.Context, dbID string) (domain.Database, error)
 	UpdateDatabasePlan(ctx context.Context, db domain.Database, expectedPlan string) (domain.DatabaseStatus, error)
 	DeleteDatabase(ctx context.Context, dbID string) error
+	ListDatabaseEndpoints(ctx context.Context, dbID string) ([]domain.DatabaseEndpoint, error)
+	GetDatabaseNetworkConfiguration(ctx context.Context, dbID string) (domain.DatabaseNetworkConfiguration, error)
+	CreateDatabaseNetPeering(ctx context.Context, dbID, outscaleNetPeeringID string) (domain.DatabaseNetPeering, error)
+	ListDatabaseNetPeerings(ctx context.Context, dbID string) ([]domain.DatabaseNetPeering, error)
+	DeleteDatabaseNetPeering(ctx context.Context, dbID, netPeeringID string) error
 
 	// Firewall.
 	CreateFirewallRule(ctx context.Context, dbID, addonID string, rule domain.FirewallRule) error

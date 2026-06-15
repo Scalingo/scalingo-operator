@@ -17,6 +17,9 @@ spec:
   networking:
     internet_access:
       enabled: true
+    outscale:
+      oks:
+        net_peering: false
     firewall:
       rules:
         - type: "custom_range"

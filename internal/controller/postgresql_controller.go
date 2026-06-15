@@ -31,6 +31,7 @@ import (
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/controller/adapters"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
+	"github.com/Scalingo/scalingo-operator/internal/controller/networking"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 	databasebase "github.com/Scalingo/scalingo-operator/internal/usecases/database/base"
 )
@@ -46,6 +47,8 @@ type PostgreSQLReconciler struct {
 // +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls/finalizers,verbs=update
 
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oks.dev,resources=netpeeringrequests,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oks.dev,resources=netpeerings,verbs=get;list;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -167,15 +170,38 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		"provisioning", isDatabaseProvisioning,
 		"running", isDatabaseRunning)
 
+	isOutscaleOKSNetPeeringEnabled := postgresql.Spec.Networking.IsOutscaleOKSNetPeeringEnabled()
+	netPeeringReconciler := networking.NetPeeringReconciler{
+		Client: r.Client,
+		Scheme: r.Scheme,
+	}
+	netPeeringResource := networking.DatabaseResource{
+		Name:       postgresql.Name,
+		Namespace:  postgresql.Namespace,
+		Owner:      &postgresql,
+		DatabaseID: postgresql.Status.ScalingoDatabaseID,
+		Networking: postgresql.Spec.Networking,
+	}
+
 	// Create/update/delete database.
 	switch {
 	case isDatabaseDeletionRequested:
-		// Delete database.
 		log.Info("Delete database")
 
-		err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
-		if err != nil {
-			return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
+		if isOutscaleOKSNetPeeringEnabled {
+			err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, netPeeringResource)
+			if err != nil {
+				return ctrl.Result{}, errors.Wrap(ctx, err, "delete net peering resources")
+			}
+		}
+
+		if postgresql.Status.ScalingoDatabaseID == "" {
+			log.Info("Database provisioning requested but no database created yet, skip database deletion")
+		} else {
+			err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
+			if err != nil {
+				return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
+			}
 		}
 
 		controllerutil.RemoveFinalizer(&postgresql, helpers.PostgreSQLFinalizerName)
@@ -185,7 +211,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 
 	case !isDatabaseAvailable && postgresql.Status.ScalingoDatabaseID == "":
-		// Create database.
 		log.Info("Create database")
 
 		newDB, err := dbManager.CreateDatabase(ctx, expectedDB)
@@ -200,7 +225,6 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		triggerRequeueLater = helpers.RequeueLongDelay
 
 	case isDatabaseAvailable && !isDatabaseProvisioning && postgresql.Status.ScalingoDatabaseID != "":
-		// Update database.
 		log.Info("Update database")
 
 		dbStatus, err := dbManager.UpdateDatabase(ctx, postgresql.Status.ScalingoDatabaseID, expectedDB)
@@ -256,12 +280,55 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			if err != nil {
 				return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", connInfoSecret.Key)
 			}
+
+			endpoints, err := dbManager.GetDatabaseEndpoints(ctx, currentDB.ID)
+			if err != nil {
+				return ctrl.Result{}, errors.Wrap(ctx, err, "get database endpoints")
+			}
+
+			for _, endpoint := range endpoints {
+				endpointURL, err := domain.ComposeEndpointConnectionURL(ctx, dbURL.Value, endpoint)
+				if err != nil {
+					return ctrl.Result{}, errors.Wrap(ctx, err, "compose endpoint connection url")
+				}
+
+				endpointConnInfoSecret := domain.Secret{
+					Namespace: req.Namespace,
+					Name:      postgresql.Spec.ConnInfoSecretTarget.Name,
+					Key:       domain.ComposeEndpointConnectionURLName(postgresql.Spec.ConnInfoSecretTarget.Prefix, dbURL.Name, endpoint.Type),
+					Value:     endpointURL,
+				}
+				log.Info("Write endpoint connection info secret", "secret", endpointConnInfoSecret)
+
+				err = secretManager.SetSecret(ctx, endpointConnInfoSecret)
+				if err != nil {
+					return ctrl.Result{}, errors.Wrapf(ctx, err, "set secret %s", endpointConnInfoSecret.Key)
+				}
+			}
 			triggerRequeueLater = helpers.RequeueShortDelay // Requeue for the is running annotation.
 
 		} else {
 			log.Info("Waiting for database being provisioned")
 			triggerRequeueLater = helpers.RequeueLongDelay
 		}
+	}
+
+	netPeeringResource.DatabaseID = postgresql.Status.ScalingoDatabaseID
+	netPeeringRequeue, err := netPeeringReconciler.Reconcile(
+		ctx,
+		dbManager,
+		netPeeringResource,
+		networking.DatabaseState{
+			DeletionRequested: isDatabaseDeletionRequested,
+			Available:         isDatabaseAvailable,
+			Provisioning:      isDatabaseProvisioning,
+		},
+	)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if netPeeringRequeue > 0 {
+		triggerRequeueLater = netPeeringRequeue
 	}
 
 	// Apply triggered resource updates and requeue later.

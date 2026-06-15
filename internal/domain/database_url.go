@@ -1,6 +1,15 @@
 package domain
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"net"
+	"net/url"
+	"strconv"
+	"strings"
+
+	"github.com/Scalingo/go-utils/errors/v3"
+)
 
 const ConnectionURLNameSuffix = "_URL"
 
@@ -18,4 +27,20 @@ func ComposeConnectionURLName(prefix, defaultName string) string {
 		return defaultName
 	}
 	return prefix + ConnectionURLNameSuffix
+}
+
+func ComposeEndpointConnectionURLName(prefix, defaultName string, endpointType DatabaseEndpointType) string {
+	if prefix == "" {
+		prefix = strings.TrimSuffix(defaultName, ConnectionURLNameSuffix)
+	}
+	return prefix + "_" + strings.ToUpper(strings.ReplaceAll(string(endpointType), "-", "_")) + ConnectionURLNameSuffix
+}
+
+func ComposeEndpointConnectionURL(ctx context.Context, defaultURL string, endpoint DatabaseEndpoint) (string, error) {
+	parsedURL, err := url.Parse(defaultURL)
+	if err != nil {
+		return "", errors.Wrap(ctx, err, "parse database url")
+	}
+	parsedURL.Host = net.JoinHostPort(endpoint.Hostname, strconv.Itoa(endpoint.Port))
+	return parsedURL.String(), nil
 }
