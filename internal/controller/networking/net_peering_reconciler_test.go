@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/Scalingo/go-utils/errors/v3"
+
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
@@ -81,11 +83,11 @@ func TestDeleteOKSNetPeerings(t *testing.T) {
 
 	clientStub := &netPeeringResourceClient{
 		items: []*unstructured.Unstructured{
-			newNetPeering("default", "net-peering-a", netPeeringStatusStateActive, "net-id", "owner-id"),
-			newNetPeering("default", "net-peering-b", netPeeringStatusStateActive, "net-id", "owner-id"),
-			newNetPeering("default", "net-peering-inactive", "pending", "net-id", "owner-id"),
-			newNetPeering("default", "net-peering-other-network", netPeeringStatusStateActive, "other-net-id", "owner-id"),
-			newNetPeering("other", "net-peering-other-namespace", netPeeringStatusStateActive, "net-id", "owner-id"),
+			newNetPeering("default", "net-peering-a", netPeeringStatusStateActive, "net-id"),
+			newNetPeering("default", "net-peering-b", netPeeringStatusStateActive, "net-id"),
+			newNetPeering("default", "net-peering-inactive", "pending", "net-id"),
+			newNetPeering("default", "net-peering-other-network", netPeeringStatusStateActive, "other-net-id"),
+			newNetPeering("other", "net-peering-other-namespace", netPeeringStatusStateActive, "net-id"),
 		},
 	}
 	databaseManager := databasemock.NewMockManager(ctrl)
@@ -116,16 +118,20 @@ func TestDeleteOKSNetPeerings(t *testing.T) {
 
 type netPeeringResourceClient struct {
 	client.Client
+
 	items []*unstructured.Unstructured
 }
 
-func (c *netPeeringResourceClient) List(_ context.Context, list client.ObjectList, opts ...client.ListOption) error {
+func (c *netPeeringResourceClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	listOptions := &client.ListOptions{}
 	for _, opt := range opts {
 		opt.ApplyToList(listOptions)
 	}
 
-	typedList := list.(*unstructured.UnstructuredList)
+	typedList, ok := list.(*unstructured.UnstructuredList)
+	if !ok {
+		return errors.New(ctx, "expected unstructured list")
+	}
 	typedList.Items = nil
 
 	for _, item := range c.items {
@@ -156,7 +162,7 @@ func (c *netPeeringResourceClient) Delete(_ context.Context, obj client.Object, 
 	return nil
 }
 
-func newNetPeering(namespace, name, state, accepterNetID, accepterOwnerID string) *unstructured.Unstructured {
+func newNetPeering(namespace, name, state, accepterNetID string) *unstructured.Unstructured {
 	object := &unstructured.Unstructured{}
 	object.SetGroupVersionKind(helpers.OutscaleNetPeeringGVK)
 	object.SetNamespace(namespace)
@@ -164,7 +170,7 @@ func newNetPeering(namespace, name, state, accepterNetID, accepterOwnerID string
 	object.Object[netPeeringStatusField] = map[string]any{
 		netPeeringStatusStateField:     state,
 		netPeeringAccepterNetIDField:   accepterNetID,
-		netPeeringAccepterOwnerIDField: accepterOwnerID,
+		netPeeringAccepterOwnerIDField: "owner-id",
 	}
 
 	return object

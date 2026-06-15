@@ -16,6 +16,7 @@ import (
 
 type NetPeeringReconciler struct {
 	client.Client
+
 	Scheme *runtime.Scheme
 }
 
@@ -99,15 +100,16 @@ func (r NetPeeringReconciler) ensureOKSNetPeeringRequest(ctx context.Context, db
 		return "", errors.Wrap(ctx, err, "list existing net peering requests for database")
 	}
 
-	netPeeringRequest := NetPeeringRequest{}
-	if len(existingNetPeeringRequestsForDatabase) == 0 {
+	var netPeeringRequest NetPeeringRequest
+	switch len(existingNetPeeringRequestsForDatabase) {
+	case 0:
 		netPeeringRequest, err = r.createOKSNetPeeringRequest(ctx, dbManager, resource)
 		if err != nil {
 			return "", errors.Wrap(ctx, err, "create net peering request")
 		}
-	} else if len(existingNetPeeringRequestsForDatabase) == 1 {
+	case 1:
 		netPeeringRequest = existingNetPeeringRequestsForDatabase[0]
-	} else {
+	default:
 		return "", errors.New(ctx, "multiple net peering requests found for database")
 	}
 
