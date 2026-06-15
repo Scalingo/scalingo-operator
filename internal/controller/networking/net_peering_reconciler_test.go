@@ -25,7 +25,7 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 
 		clientStub := &netPeeringResourceClient{
 			items: []*unstructured.Unstructured{
-				newNetPeeringRequest("default", "net-peering-request", "db-123", "pcx-1234"),
+				newNetPeeringRequest("net-peering-request", "pcx-1234"),
 			},
 		}
 		databaseManager := databasemock.NewMockManager(ctrl)
@@ -58,7 +58,7 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 
 		clientStub := &netPeeringResourceClient{
 			items: []*unstructured.Unstructured{
-				newNetPeeringRequest("default", "net-peering-request", "db-123", ""),
+				newNetPeeringRequest("net-peering-request", ""),
 			},
 		}
 		databaseManager := databasemock.NewMockManager(ctrl)
@@ -91,8 +91,8 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 		clientStub := &netPeeringResourceClient{
 			items: []*unstructured.Unstructured{
 				newNetPeering("default", "pcx-1234", netPeeringStatusStateActive, "net-id"),
-				newNetPeeringRequest("default", "net-peering-request-a", "db-123", "pcx-5678"),
-				newNetPeeringRequest("default", "net-peering-request-b", "db-123", "pcx-9012"),
+				newNetPeeringRequest("net-peering-request-a", "pcx-5678"),
+				newNetPeeringRequest("net-peering-request-b", "pcx-9012"),
 			},
 		}
 		databaseManager := databasemock.NewMockManager(ctrl)
@@ -220,12 +220,12 @@ func newNetPeering(namespace, name, state, accepterNetID string) *unstructured.U
 	return object
 }
 
-func newNetPeeringRequest(namespace, name, databaseID, netPeeringID string) *unstructured.Unstructured {
+func newNetPeeringRequest(name, netPeeringID string) *unstructured.Unstructured {
 	object := &unstructured.Unstructured{}
 	object.SetGroupVersionKind(helpers.OutscaleNetPeeringRequestGVK)
-	object.SetNamespace(namespace)
+	object.SetNamespace("default")
 	object.SetName(name)
-	object.SetLabels(map[string]string{netPeeringRequestDatabaseIDLabel: databaseID})
+	object.SetLabels(map[string]string{netPeeringRequestDatabaseIDLabel: "db-123"})
 	object.Object[netPeeringRequestStatusField] = map[string]any{
 		netPeeringRequestNetPeeringIDField: netPeeringID,
 	}
