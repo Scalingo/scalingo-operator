@@ -1,4 +1,4 @@
-# Scalingo Operator v1.2.0
+# Scalingo Operator v1.3.0
 
 The Scalingo Operator can deploy and undeploy PostgreSQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
@@ -304,10 +304,10 @@ Bump new version number in:
 Commit, tag and create a new release:
 
 ```sh
-VERSION="1.2.0"
+VERSION="1.3.0"
 
 git switch --create release/${VERSION}
-git add .
+git add config/manager/kustomization.yaml README.md CHANGELOG.md
 git commit --message="feat: bump v${VERSION}"
 git push --set-upstream origin release/${VERSION}
 gh pr create --reviewer=scalingo/team-ist --fill-first
