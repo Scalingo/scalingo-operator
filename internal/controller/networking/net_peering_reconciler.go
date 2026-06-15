@@ -53,7 +53,7 @@ func (r NetPeeringReconciler) Reconcile(ctx context.Context, dbManager databaseu
 	}
 
 	log.Info("Reconcile Outscale OKS net peering")
-	netPeeringID, err := r.ensureOKSNetPeeringRequest(ctx, dbManager, resource)
+	netPeeringID, err := r.ensureOKSNetPeeringID(ctx, dbManager, resource)
 	if err != nil {
 		return 0, errors.Wrap(ctx, err, "reconcile net peering request")
 	}
@@ -94,7 +94,16 @@ func (r NetPeeringReconciler) DeleteNetPeerings(ctx context.Context, dbManager d
 	return nil
 }
 
-func (r NetPeeringReconciler) ensureOKSNetPeeringRequest(ctx context.Context, dbManager databaseusecases.Manager, resource DatabaseResource) (string, error) {
+func (r NetPeeringReconciler) ensureOKSNetPeeringID(ctx context.Context, dbManager databaseusecases.Manager, resource DatabaseResource) (string, error) {
+	existingNetPeeringsForDatabase, err := r.listExistingNetPeeringsForDatabase(ctx, dbManager, resource)
+	if err != nil {
+		return "", errors.Wrap(ctx, err, "list existing net peerings for database")
+	}
+
+	if len(existingNetPeeringsForDatabase) > 0 {
+		return existingNetPeeringsForDatabase[0].Name(), nil
+	}
+
 	existingNetPeeringRequestsForDatabase, err := r.listExistingNetPeeringRequestsForDatabase(ctx, resource)
 	if err != nil {
 		return "", errors.Wrap(ctx, err, "list existing net peering requests for database")

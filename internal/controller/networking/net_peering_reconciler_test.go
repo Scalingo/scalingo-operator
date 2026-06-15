@@ -40,6 +40,10 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 			Networking: netPeeringEnabledNetworkingSpec(),
 		}
 
+		databaseManager.EXPECT().GetDatabaseNetworkConfiguration(ctx, "db-123").Return(domain.DatabaseNetworkConfiguration{
+			OutscaleNetID:     "net-id",
+			OutscaleAccountID: "owner-id",
+		}, nil)
 		databaseManager.EXPECT().EnsureDatabaseNetPeering(ctx, "db-123", "pcx-1234").Return(nil)
 
 		requeue, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
@@ -69,10 +73,50 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 			Networking: netPeeringEnabledNetworkingSpec(),
 		}
 
+		databaseManager.EXPECT().GetDatabaseNetworkConfiguration(ctx, "db-123").Return(domain.DatabaseNetworkConfiguration{
+			OutscaleNetID:     "net-id",
+			OutscaleAccountID: "owner-id",
+		}, nil)
+
 		requeue, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
 
 		require.NoError(t, err)
 		require.Equal(t, helpers.RequeueLongDelay, requeue)
+	})
+
+	t.Run("ensures database net peering from existing active net peering", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+
+		clientStub := &netPeeringResourceClient{
+			items: []*unstructured.Unstructured{
+				newNetPeering("default", "pcx-1234", netPeeringStatusStateActive, "net-id"),
+				newNetPeeringRequest("default", "net-peering-request-a", "db-123", "pcx-5678"),
+				newNetPeeringRequest("default", "net-peering-request-b", "db-123", "pcx-9012"),
+			},
+		}
+		databaseManager := databasemock.NewMockManager(ctrl)
+
+		reconciler := NetPeeringReconciler{
+			Client: clientStub,
+		}
+		resource := DatabaseResource{
+			Name:       "db-resource",
+			Namespace:  "default",
+			DatabaseID: "db-123",
+			Networking: netPeeringEnabledNetworkingSpec(),
+		}
+
+		databaseManager.EXPECT().GetDatabaseNetworkConfiguration(ctx, "db-123").Return(domain.DatabaseNetworkConfiguration{
+			OutscaleNetID:     "net-id",
+			OutscaleAccountID: "owner-id",
+		}, nil)
+		databaseManager.EXPECT().EnsureDatabaseNetPeering(ctx, "db-123", "pcx-1234").Return(nil)
+
+		requeue, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
+
+		require.NoError(t, err)
+		require.Zero(t, requeue)
 	})
 }
 
