@@ -2,6 +2,9 @@
 
 ## To Be Released
 
+* feat(db/deletion) Support database resource deletion when the resource was deleted first through Scalingo API
+* feat(iprange) Forward networking.ip_range attribute to the database creation params to choose the ip range
+
 ## v1.3.0
 
 * feat(oks-net-peering) Add outscale:oks:net_peering parameter to automatically create oks net peering request acceptation and configure the database to use it
