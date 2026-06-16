@@ -8,6 +8,7 @@ import (
 
 type Manager interface {
 	CreateDatabase(ctx context.Context, db domain.Database) (domain.Database, error)
+	CheckDatabaseExists(ctx context.Context, dbID string) (bool, error)
 	GetDatabase(ctx context.Context, dbID string) (domain.Database, error)
 	GetDatabaseURL(ctx context.Context, db domain.Database) (domain.DatabaseURL, error)
 	GetDatabaseEndpoints(ctx context.Context, dbID string) ([]domain.DatabaseEndpoint, error)

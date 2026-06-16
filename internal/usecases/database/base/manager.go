@@ -3,8 +3,6 @@ package database
 import (
 	"context"
 
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
 	errors "github.com/Scalingo/go-utils/errors/v3"
 	scalingo "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo"
 	scalingobase "github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo/base"
@@ -41,59 +39,6 @@ func (m *manager) CreateDatabase(ctx context.Context, db domain.Database) (domai
 	return m.scClient.CreateDatabase(ctx, db)
 }
 
-func (m *manager) GetDatabase(ctx context.Context, dbID string) (domain.Database, error) {
-	log := logf.FromContext(ctx)
-
-	if dbID == "" {
-		return domain.Database{}, errors.New(ctx, "empty database id")
-	}
-	db, err := m.scClient.GetDatabase(ctx, dbID)
-	if err != nil {
-		return domain.Database{}, errors.Wrapf(ctx, err, "get database %s", dbID)
-	}
-
-	rules, err := m.scClient.ListFirewallRules(ctx, db.ID, db.AddonID)
-	if err != nil {
-		return domain.Database{}, errors.Wrap(ctx, err, "get database firewall rules")
-	}
-
-	db.FireWallRules = rules
-	log.Info("Get database", "database", db)
-
-	return db, nil
-}
-
-func (m *manager) GetDatabaseURL(ctx context.Context, db domain.Database) (domain.DatabaseURL, error) {
-	dbTypeName, err := toDatabaseTypeName(ctx, db.Type)
-	if err != nil {
-		return domain.DatabaseURL{}, errors.Wrap(ctx, err, "to database type name")
-	}
-
-	varName := "SCALINGO_" + dbTypeName + "_URL"
-	varValue, err := m.scClient.FindApplicationVariable(ctx, db.AppID, varName)
-	if err != nil {
-		return domain.DatabaseURL{}, errors.Wrap(ctx, err, "find database url")
-	}
-	return domain.DatabaseURL{
-		Name:  varName,
-		Value: varValue,
-	}, nil
-}
-
-func (m *manager) UpdateDatabase(ctx context.Context, dbID string, expectedDB domain.Database) (domain.DatabaseStatus, error) {
-	db, err := m.GetDatabase(ctx, dbID)
-	if err != nil {
-		return domain.DatabaseStatusUnknown, errors.Wrapf(ctx, err, "get database %s", dbID)
-	}
-
-	err = m.applyInstantDatabaseUpdates(ctx, db, expectedDB)
-	if err != nil {
-		return db.Status, err
-	}
-
-	return m.updateDatabaseWithProvisioning(ctx, db, expectedDB)
-}
-
 // applyInstantDatabaseUpdates applies updates that do NOT require provisioning,
 // such as firewall rules update.
 // These updates are applied instantly or within few seconds.
@@ -121,18 +66,6 @@ func (m *manager) updateDatabaseWithProvisioning(ctx context.Context, db, expect
 		return db.Status, errors.Wrap(ctx, err, "update database plan")
 	}
 	return dbStatus, nil
-}
-
-func (m *manager) DeleteDatabase(ctx context.Context, dbID string) error {
-	if dbID == "" {
-		return errors.New(ctx, "empty database id")
-	}
-
-	err := m.scClient.DeleteDatabase(ctx, dbID)
-	if err != nil {
-		return errors.Wrapf(ctx, err, "delete database %v", dbID)
-	}
-	return nil
 }
 
 func toDatabaseTypeName(ctx context.Context, dbType domain.DatabaseType) (string, error) {
