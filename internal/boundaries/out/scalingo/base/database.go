@@ -20,6 +20,7 @@ func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain
 		PlanID:          db.Plan,
 		Name:            db.Name,
 		ProjectID:       db.ProjectID,
+		IPRange:         db.IPRange,
 	})
 
 	if err != nil {

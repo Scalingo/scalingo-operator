@@ -20,6 +20,7 @@ spec:
     name: my-postgresql-secret
 
   networking:
+    ip_range: "10.231.23.0/24"
     internet_access:
       enabled: true
     outscale:
