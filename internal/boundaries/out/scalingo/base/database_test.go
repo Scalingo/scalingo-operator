@@ -6,9 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	scalingoapi "github.com/Scalingo/go-scalingo/v11"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	scalingoapi "github.com/Scalingo/go-scalingo/v11"
 
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
