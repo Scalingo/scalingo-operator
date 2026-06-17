@@ -304,7 +304,7 @@ Bump new version number in:
 Commit, tag and create a new release:
 
 ```sh
-VERSION="1.3.0"
+VERSION="1.3.1"
 
 git switch --create release/${VERSION}
 git add config/manager/kustomization.yaml README.md CHANGELOG.md
