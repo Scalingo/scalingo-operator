@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+## v1.3.1
+
 * feat(db/deletion) Support database resource deletion when the resource was deleted first through Scalingo API
 * feat(iprange) Forward networking.ip_range attribute to the database creation params to choose the ip range
 
