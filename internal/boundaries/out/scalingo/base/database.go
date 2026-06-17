@@ -4,10 +4,12 @@ import (
 	"context"
 
 	scalingoapi "github.com/Scalingo/go-scalingo/v11"
-	errors "github.com/Scalingo/go-utils/errors/v3"
+	"github.com/Scalingo/go-utils/errors/v3"
 	"github.com/Scalingo/scalingo-operator/internal/boundaries/out/scalingo/base/adapters"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
+
+var ErrDatabaseNotFound = scalingoapi.ErrDatabaseNotFound
 
 func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain.Database, error) {
 	addonProviderID, err := adapters.ToScalingoProviderID(db.Type)
@@ -20,6 +22,7 @@ func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain
 		PlanID:          db.Plan,
 		Name:            db.Name,
 		ProjectID:       db.ProjectID,
+		IPRange:         db.IPRange,
 	})
 
 	if err != nil {
@@ -30,7 +33,9 @@ func (c *client) CreateDatabase(ctx context.Context, db domain.Database) (domain
 
 func (c *client) GetDatabase(ctx context.Context, dbID string) (domain.Database, error) {
 	currentDB, err := c.scClient.Preview().DatabaseShow(ctx, dbID)
-	if err != nil {
+	if errors.Is(err, scalingoapi.ErrDatabaseNotFound) {
+		return domain.Database{}, errors.Wrap(ctx, ErrDatabaseNotFound, "get database")
+	} else if err != nil {
 		return domain.Database{}, errors.Wrap(ctx, err, "get database")
 	}
 

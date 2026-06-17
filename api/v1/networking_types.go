@@ -1,6 +1,11 @@
 package v1
 
 type NetworkingSpec struct {
+	// IPRange is the private network range to use when creating the database.
+	// +kubebuilder:validation:Pattern=`^([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$`
+	// +optional
+	IPRange string `json:"ip_range,omitempty"`
+
 	// InternetAccess defines the external access through internet.
 	// +kubebuilder:validation:Required
 	InternetAccess InternetAccessSpec `json:"internet_access"`

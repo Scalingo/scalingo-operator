@@ -36,6 +36,21 @@ func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 	return m.recorder
 }
 
+// CheckDatabaseExists mocks base method.
+func (m *MockManager) CheckDatabaseExists(ctx context.Context, dbID string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckDatabaseExists", ctx, dbID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckDatabaseExists indicates an expected call of CheckDatabaseExists.
+func (mr *MockManagerMockRecorder) CheckDatabaseExists(ctx, dbID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckDatabaseExists", reflect.TypeOf((*MockManager)(nil).CheckDatabaseExists), ctx, dbID)
+}
+
 // CreateDatabase mocks base method.
 func (m *MockManager) CreateDatabase(ctx context.Context, db domain.Database) (domain.Database, error) {
 	m.ctrl.T.Helper()

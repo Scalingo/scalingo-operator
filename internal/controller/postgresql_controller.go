@@ -187,20 +187,32 @@ func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	switch {
 	case isDatabaseDeletionRequested:
 		log.Info("Delete database")
-
-		if isOutscaleOKSNetPeeringEnabled {
-			err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, netPeeringResource)
-			if err != nil {
-				return ctrl.Result{}, errors.Wrap(ctx, err, "delete net peering resources")
-			}
-		}
+		shouldDeleteResources := true
 
 		if postgresql.Status.ScalingoDatabaseID == "" {
 			log.Info("Database provisioning requested but no database created yet, skip database deletion")
 		} else {
-			err := dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
+			ok, err := dbManager.CheckDatabaseExists(ctx, postgresql.Status.ScalingoDatabaseID)
 			if err != nil {
-				return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
+				return ctrl.Result{}, errors.Wrapf(ctx, err, "check database %s exists", postgresql.Status.ScalingoDatabaseID)
+			}
+			if !ok {
+				shouldDeleteResources = false
+				log.Info("Scalingo database not found, skip database deletion", "database", postgresql.Status.ScalingoDatabaseID)
+			}
+
+			if shouldDeleteResources {
+				if isOutscaleOKSNetPeeringEnabled {
+					err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, netPeeringResource)
+					if err != nil {
+						return ctrl.Result{}, errors.Wrap(ctx, err, "delete net peering resources")
+					}
+				}
+
+				err = dbManager.DeleteDatabase(ctx, postgresql.Status.ScalingoDatabaseID)
+				if err != nil {
+					return ctrl.Result{}, errors.Wrapf(ctx, err, "delete database id %s", postgresql.Status.ScalingoDatabaseID)
+				}
 			}
 		}
 

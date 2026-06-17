@@ -133,6 +133,11 @@ spec:
                     required:
                     - enabled
                     type: object
+                  ip_range:
+                    description: IPRange is the private network range to use when
+                      creating the database.
+                    pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$
+                    type: string
                   outscale:
                     description: Outscale defines the Outscale networking configuration.
                     properties:

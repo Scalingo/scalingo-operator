@@ -21,7 +21,10 @@ func TestPostgreSQLToDatabase(t *testing.T) {
 	t.Run("it converts postgresql data from Kubebuilder to internal format", func(t *testing.T) {
 		pg := apiv1.PostgreSQL{
 			Spec: apiv1.PostgreSQLSpec{
-				Name:      dbName,
+				Name: dbName,
+				Networking: apiv1.NetworkingSpec{
+					IPRange: "10.231.23.0/24",
+				},
 				Plan:      dbPlan,
 				ProjectID: projectID,
 			},
@@ -31,6 +34,7 @@ func TestPostgreSQLToDatabase(t *testing.T) {
 			Type:      domain.DatabaseTypePostgreSQL,
 			Plan:      dbPlan,
 			ProjectID: projectID,
+			IPRange:   "10.231.23.0/24",
 		}
 		res, err := PostgreSQLToDatabase(t.Context(), pg)
 

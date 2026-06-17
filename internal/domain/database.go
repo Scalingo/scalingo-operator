@@ -10,6 +10,7 @@ type Database struct {
 	Status     DatabaseStatus
 	Plan       string
 	ProjectID  string
+	IPRange    string
 
 	FireWallRules []FirewallRule
 }
