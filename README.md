@@ -1,4 +1,4 @@
-# Scalingo Operator v1.3.0
+# Scalingo Operator v1.3.1
 
 The Scalingo Operator can deploy and undeploy PostgreSQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
