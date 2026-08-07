@@ -1,5 +1,5 @@
 /*
-Copyright 2025.
+Copyright 2026.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,6 +34,7 @@ import (
 // MySQLReconciler reconciles a MySQL object.
 type MySQLReconciler struct {
 	client.Client
+
 	Scheme *runtime.Scheme
 }
 
@@ -87,7 +89,11 @@ func newMySQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtim
 			finalizerName: helpers.MySQLFinalizerName,
 			databaseType:  domain.DatabaseTypeMySQL,
 			toDatabase: func(ctx context.Context, resource dedicatedDatabaseResource) (domain.Database, error) {
-				return adapters.MySQLToDatabase(ctx, *resource.(*mysqlResource).object)
+				mysqlResource, ok := resource.(*mysqlResource)
+				if !ok {
+					return domain.Database{}, fmt.Errorf("expected MySQL resource, got %T", resource)
+				}
+				return adapters.MySQLToDatabase(ctx, *mysqlResource.object)
 			},
 		},
 	}

@@ -28,12 +28,12 @@ type dedicatedDatabaseResource interface {
 	Networking() apiv1.NetworkingSpec
 	Region() string
 	DatabaseID() string
-	SetDatabaseID(string)
+	SetDatabaseID(id string)
 	Conditions() *[]metav1.Condition
 }
 
 type databaseSecretWriter interface {
-	SetSecret(context.Context, domain.Secret) error
+	SetSecret(ctx context.Context, secret domain.Secret) error
 }
 
 type dedicatedDatabaseConfig struct {
@@ -45,6 +45,7 @@ type dedicatedDatabaseConfig struct {
 
 type dedicatedDatabaseReconciler struct {
 	client.Client
+
 	Scheme *runtime.Scheme
 	config dedicatedDatabaseConfig
 }
@@ -242,32 +243,9 @@ func (r *dedicatedDatabaseReconciler) deleteDatabase(
 	if databaseID == "" {
 		log.Info("Database provisioning requested but no database created yet, skip database deletion")
 	} else {
-		exists, err := dbManager.CheckDatabaseExists(ctx, databaseID)
+		err := r.deleteScalingoDatabase(ctx, resource, dbManager, databaseID)
 		if err != nil {
-			return errors.Wrapf(ctx, err, "check database %s exists", databaseID)
-		}
-		if !exists {
-			log.Info("Scalingo database not found, skip database deletion", "database", databaseID)
-		} else {
-			networkingSpec := resource.Networking()
-			if networkingSpec.IsOutscaleOKSNetPeeringEnabled() {
-				netPeeringReconciler := networking.NetPeeringReconciler{Client: r.Client, Scheme: r.Scheme}
-				err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, networking.DatabaseResource{
-					Name:       resource.Object().GetName(),
-					Namespace:  resource.Object().GetNamespace(),
-					Owner:      resource.Object(),
-					DatabaseID: databaseID,
-					Networking: networkingSpec,
-				})
-				if err != nil {
-					return errors.Wrap(ctx, err, "delete net peering resources")
-				}
-			}
-
-			err = dbManager.DeleteDatabase(ctx, databaseID)
-			if err != nil {
-				return errors.Wrapf(ctx, err, "delete database id %s", databaseID)
-			}
+			return err
 		}
 	}
 
@@ -275,6 +253,44 @@ func (r *dedicatedDatabaseReconciler) deleteDatabase(
 	err := r.Update(ctx, resource.Object())
 	if err != nil {
 		return errors.Wrap(ctx, err, "remove resource finalizer")
+	}
+	return nil
+}
+
+func (r *dedicatedDatabaseReconciler) deleteScalingoDatabase(
+	ctx context.Context,
+	resource dedicatedDatabaseResource,
+	dbManager databaseusecases.Manager,
+	databaseID string,
+) error {
+	log := logf.FromContext(ctx)
+	exists, err := dbManager.CheckDatabaseExists(ctx, databaseID)
+	if err != nil {
+		return errors.Wrapf(ctx, err, "check database %s exists", databaseID)
+	}
+	if !exists {
+		log.Info("Scalingo database not found, skip database deletion", "database", databaseID)
+		return nil
+	}
+
+	networkingSpec := resource.Networking()
+	if networkingSpec.IsOutscaleOKSNetPeeringEnabled() {
+		netPeeringReconciler := networking.NetPeeringReconciler{Client: r.Client, Scheme: r.Scheme}
+		err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, networking.DatabaseResource{
+			Name:       resource.Object().GetName(),
+			Namespace:  resource.Object().GetNamespace(),
+			Owner:      resource.Object(),
+			DatabaseID: databaseID,
+			Networking: networkingSpec,
+		})
+		if err != nil {
+			return errors.Wrap(ctx, err, "delete net peering resources")
+		}
+	}
+
+	err = dbManager.DeleteDatabase(ctx, databaseID)
+	if err != nil {
+		return errors.Wrapf(ctx, err, "delete database id %s", databaseID)
 	}
 	return nil
 }

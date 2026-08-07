@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -87,7 +88,11 @@ func newPostgreSQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *r
 			finalizerName: helpers.PostgreSQLFinalizerName,
 			databaseType:  domain.DatabaseTypePostgreSQL,
 			toDatabase: func(ctx context.Context, resource dedicatedDatabaseResource) (domain.Database, error) {
-				return adapters.PostgreSQLToDatabase(ctx, *resource.(*postgresqlResource).object)
+				postgresqlResource, ok := resource.(*postgresqlResource)
+				if !ok {
+					return domain.Database{}, fmt.Errorf("expected PostgreSQL resource, got %T", resource)
+				}
+				return adapters.PostgreSQLToDatabase(ctx, *postgresqlResource.object)
 			},
 		},
 	}
