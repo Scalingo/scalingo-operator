@@ -1,0 +1,255 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: mysqls.databases.scalingo.com
+spec:
+  group: databases.scalingo.com
+  names:
+    kind: MySQL
+    listKind: MySQLList
+    plural: mysqls
+    singular: mysql
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: MySQL is the Schema for the mysqls API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of MySQL
+            properties:
+              authSecret:
+                description: AuthSecret contains the references to the authentication
+                  details needed to connect to Scalingo.
+                properties:
+                  key:
+                    default: token
+                    description: |-
+                      SecretKey is the key within the Secret that holds the authentication information.
+                      If not specified, it defaults to "token".
+                    type: string
+                  name:
+                    description: SecretName is the name of the Kubernetes Secret that
+                      contains authentication details.
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
+              connInfoSecretTarget:
+                description: ConnInfoSecretTarget defines where to store the connection
+                  information secret.
+                properties:
+                  name:
+                    description: The name of the secret to create or update with the
+                      connection information.
+                    minLength: 1
+                    type: string
+                  prefix:
+                    description: |-
+                      Prefix for the secret keys.
+                      Added as is without any transformation.
+                      By default, the prefix uses the following format: "SCALINGO_<DB_TYPE>_"
+                    type: string
+                required:
+                - name
+                type: object
+              name:
+                description: Name is the name of the MySQL database to create on Scalingo.
+                  Falls back to metadata.name if empty.
+                minLength: 5
+                type: string
+              networking:
+                description: Networking defines the networking configuration.
+                properties:
+                  firewall:
+                    description: Firewall defines the firewall rules.
+                    properties:
+                      rules:
+                        description: Rules is a list of firewall rules to be applied.
+                        items:
+                          properties:
+                            cidr:
+                              description: CIDR is the IP range in CIDR notation for
+                                "custom_range" type rules.
+                              pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$
+                              type: string
+                            label:
+                              description: Label is an optional label for the firewall
+                                rule.
+                              minLength: 5
+                              type: string
+                            range_id:
+                              description: RangeID is the identifier of the managed
+                                range for "managed_range" type rules.
+                              minLength: 5
+                              type: string
+                            type:
+                              description: 'Type of the firewall rule: custom or managed
+                                range.'
+                              enum:
+                              - custom_range
+                              - managed_range
+                              type: string
+                          required:
+                          - type
+                          type: object
+                        minItems: 1
+                        type: array
+                    required:
+                    - rules
+                    type: object
+                  internet_access:
+                    description: InternetAccess defines the external access through
+                      internet.
+                    properties:
+                      enabled:
+                        default: true
+                        description: Enabled enables external access.
+                        enum:
+                        - true
+                        type: boolean
+                    required:
+                    - enabled
+                    type: object
+                  ip_range:
+                    description: IPRange is the private network range to use when
+                      creating the database.
+                    pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]{1,2}$
+                    type: string
+                  outscale:
+                    description: Outscale defines the Outscale networking configuration.
+                    properties:
+                      oks:
+                        description: OKS defines the Outscale Kubernetes Service networking
+                          configuration.
+                        properties:
+                          net_peering:
+                            description: NetPeering enables Outscale Net Peering management
+                              for the database.
+                            type: boolean
+                        type: object
+                    type: object
+                required:
+                - internet_access
+                type: object
+              plan:
+                description: Plan is the plan to use for the MySQL database.
+                minLength: 10
+                type: string
+              projectID:
+                description: |-
+                  ProjectID is the Scalingo project ID where the MySQL database will be created.
+                  If not specified, the default project associated with the authentication token will be used.
+                type: string
+              region:
+                default: osc-fr1
+                description: Region is the Scalingo region where the MySQL database
+                  will be created.
+                minLength: 5
+                type: string
+            required:
+            - authSecret
+            - connInfoSecretTarget
+            - networking
+            - plan
+            - region
+            type: object
+          status:
+            description: status defines the observed state of MySQL
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the MySQL resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              scalingoDatabaseID:
+                description: ScalingoDatabaseID is the unique identifier of the MySQL
+                  database on Scalingo.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

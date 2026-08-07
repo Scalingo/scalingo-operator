@@ -27,6 +27,10 @@ func TestToScalingoProviderID(t *testing.T) {
 			dbType:             domain.DatabaseTypePostgreSQL,
 			scalingoProviderId: postgresqlAddonProviderID,
 		},
+		"it successfully extract MySQL Scalingo addon provider ID": {
+			dbType:             domain.DatabaseTypeMySQL,
+			scalingoProviderId: mysqlAddonProviderID,
+		},
 	}
 
 	for name, test := range tests {
@@ -151,5 +155,20 @@ func TestToDatabase(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, expectedDB, res)
+	})
+
+	t.Run("it converts MySQL to database", func(t *testing.T) {
+		db := scalingoapi.DatabaseNG{
+			Database: scalingoapi.Database{
+				ID:       "mysql-db-id",
+				TypeName: "mysql",
+				Status:   scalingoapi.DatabaseStatusRunning,
+			},
+		}
+
+		res, err := ToDatabase(t.Context(), db)
+
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseTypeMySQL, res.Type)
 	})
 }

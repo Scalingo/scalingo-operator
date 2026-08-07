@@ -19,6 +19,7 @@ rules:
 - apiGroups:
   - databases.scalingo.com
   resources:
+  - mysqls
   - postgresqls
   verbs:
   - create
@@ -31,12 +32,14 @@ rules:
 - apiGroups:
   - databases.scalingo.com
   resources:
+  - mysqls/finalizers
   - postgresqls/finalizers
   verbs:
   - update
 - apiGroups:
   - databases.scalingo.com
   resources:
+  - mysqls/status
   - postgresqls/status
   verbs:
   - get

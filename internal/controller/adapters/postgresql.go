@@ -3,29 +3,19 @@ package adapters
 import (
 	"context"
 
-	"github.com/Scalingo/go-utils/errors/v3"
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-// Convert from Kubebuilder type to internal type.
+// PostgreSQLToDatabase converts a PostgreSQL Kubernetes resource to the internal database representation.
 func PostgreSQLToDatabase(ctx context.Context, postgresql apiv1.PostgreSQL) (domain.Database, error) {
-	rules, err := toFirewallRules(ctx, postgresql.Spec.Networking)
-	if err != nil {
-		return domain.Database{}, errors.Wrap(ctx, err, "to firewall rules")
-	}
-
-	dbName := postgresql.Spec.Name
-	if dbName == "" {
-		dbName = postgresql.Name
-	}
-
-	return domain.Database{
-		Name:          dbName,
-		Type:          domain.DatabaseTypePostgreSQL,
-		Plan:          postgresql.Spec.Plan,
-		ProjectID:     postgresql.Spec.ProjectID,
-		IPRange:       postgresql.Spec.Networking.IPRange,
-		FireWallRules: rules,
-	}, nil
+	return toDatabase(
+		ctx,
+		domain.DatabaseTypePostgreSQL,
+		postgresql.Name,
+		postgresql.Spec.Name,
+		postgresql.Spec.Plan,
+		postgresql.Spec.ProjectID,
+		postgresql.Spec.Networking,
+	)
 }
