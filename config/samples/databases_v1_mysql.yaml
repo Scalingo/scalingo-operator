@@ -1,0 +1,34 @@
+apiVersion: databases.scalingo.com/v1
+kind: MySQL
+metadata:
+  labels:
+    app.kubernetes.io/name: scalingo-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mysql-sample
+spec:
+  authSecret:
+    name: scalingo
+    key: api_token
+  connInfoSecretTarget:
+    name: my-mysql-secret
+    prefix: MYSQL
+
+  networking:
+    ip_range: "10.231.23.0/24"
+    internet_access:
+      enabled: true
+    outscale:
+      oks:
+        net_peering: false
+    firewall:
+      rules:
+        - type: "custom_range"
+          cidr: "0.0.0.0/0"
+          label: "Allow the world"
+        - type: "managed_range"
+          range_id: "man-osc-fr1-egress"
+
+  name: my-mysql-db
+  plan: mysql-dr-starter-8192
+  region: osc-fr1
+  projectID: prj-88888888-4444-4444-4444-cccccccccccc

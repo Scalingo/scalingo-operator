@@ -1,6 +1,6 @@
 # Scalingo Operator v1.3.1
 
-The Scalingo Operator can deploy and undeploy PostgreSQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
+The Scalingo Operator can deploy and undeploy PostgreSQL and MySQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
 # Definitions
 
@@ -11,8 +11,9 @@ Few helpful definitions to start with.
 A CRD is a Kubernetes object used to define a new custom resource type in the Kubernetes API.
 It tells the API server: “Here is a new kind (e.g., MyApp) and its schema.”
 
-Example:
-`config/crd/bases/databases.scalingo.com_postgresqls.yaml`
+Examples:
+* `config/crd/bases/databases.scalingo.com_postgresqls.yaml`
+* `config/crd/bases/databases.scalingo.com_mysqls.yaml`
 
 ## CR (Custom Resource)
 
@@ -20,6 +21,7 @@ A CR is an actual instance of the type defined by the CRD.
 
 Examples:
 * `config/samples/databases_v1_postgresql.yaml`
+* `config/samples/databases_v1_mysql.yaml`
 * `doc/examples/custom_resources/cr-postgresql.starter.yaml`
 * `doc/examples/custom_resources/cr-postgresql.enterprise.yaml`
 
@@ -64,9 +66,14 @@ kubectl logs deploy/scalingo-operator-controller-manager --namespace scalingo-op
 
 Once the operator is deployed and running, deploy the database resource using its descriptor.
 
-Using PostgreSQL sample example:
+Using the PostgreSQL sample:
 ```sh
 kubectl apply --filename config/samples/databases_v1_postgresql.yaml
+```
+
+Using the MySQL sample:
+```sh
+kubectl apply --filename config/samples/databases_v1_mysql.yaml
 ```
 
 ### Read Database URL
@@ -127,10 +134,12 @@ While provisioning, no other plan change is possible.
 
 Use almost the same command than deploy, with the same descriptor file: replace `apply` by `delete`.
 
-Using PostgreSQL sample example:
+Using the PostgreSQL sample:
 ```sh
 kubectl delete --filename config/samples/databases_v1_postgresql.yaml
 ```
+
+For MySQL, replace the filename with `config/samples/databases_v1_mysql.yaml`.
 
 ## Undeploy the Operator
 
@@ -174,6 +183,7 @@ For this reason it is kept as is, ensuring the `Controllers` **plus** the `Bound
 sudo snap install microk8s --classic
 sudo snap install kubectl --classic
 
+mkdir -p $HOME/.kube
 microk8s.kubectl config view --raw > $HOME/.kube/microk8s.config
 
 # then add in ~/.zshrc
@@ -206,6 +216,7 @@ These commands were executed to create this operator:
 ```sh
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
 kubebuilder create api --group databases --version v1 --kind PostgreSQL
+kubebuilder create api --group databases --version v1 --kind MySQL
 make manifests
 make install
 ```
@@ -294,7 +305,7 @@ then, execute `make deploy IMG=...`.
 ## Release a New Version
 
 > [!WARNING]
-> Add any new supported `spec` in `config/samples/databases_v1_postgresql.yaml`.
+> Add any new supported `spec` in the relevant database sample under `config/samples/`.
 
 Bump new version number in:
 - `config/manager/kustomization.yaml`, field `newTag`, do not forget the prefix `v`,

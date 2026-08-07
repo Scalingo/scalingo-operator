@@ -52,6 +52,22 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 		require.Zero(t, requeue)
 	})
 
+	t.Run("does not inspect disabled net peering while database is provisioning", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		databaseManager := databasemock.NewMockManager(ctrl)
+
+		reconciler := NetPeeringReconciler{}
+		resource := DatabaseResource{
+			DatabaseID: "db-123",
+		}
+
+		requeue, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Provisioning: true})
+
+		require.NoError(t, err)
+		require.Zero(t, requeue)
+	})
+
 	t.Run("requeues while request is not provisioned", func(t *testing.T) {
 		ctx := t.Context()
 		ctrl := gomock.NewController(t)
