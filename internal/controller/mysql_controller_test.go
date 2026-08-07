@@ -1,5 +1,5 @@
 /*
-Copyright 2025.
+Copyright 2026.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ limitations under the License.
 package controller
 
 import (
-	"context"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -38,15 +36,13 @@ var _ = Describe("MySQL Controller", func() {
 			resourceNamespace = "default"
 		)
 
-		ctx := context.Background()
-
 		typeNamespacedName := types.NamespacedName{
 			Name:      resourceName,
 			Namespace: resourceNamespace,
 		}
 		mysql := &databasesv1.MySQL{}
 
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			By("creating the custom resource for the Kind MySQL")
 			err := k8sClient.Get(ctx, typeNamespacedName, mysql)
 			if err != nil && errors.IsNotFound(err) {
@@ -74,7 +70,7 @@ var _ = Describe("MySQL Controller", func() {
 			}
 		})
 
-		AfterEach(func() {
+		AfterEach(func(ctx SpecContext) {
 			resource := &databasesv1.MySQL{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
@@ -87,7 +83,7 @@ var _ = Describe("MySQL Controller", func() {
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 
-		It("initializes the MySQL resource before provisioning", func() {
+		It("initializes the MySQL resource before provisioning", func(ctx SpecContext) {
 			controllerReconciler := &MySQLReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),

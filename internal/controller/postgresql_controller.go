@@ -48,6 +48,10 @@ func (r *postgresqlResource) Meta() *metav1.ObjectMeta {
 	return &r.object.ObjectMeta
 }
 
+func (r *postgresqlResource) ToDatabase(ctx context.Context) (domain.Database, error) {
+	return adapters.PostgreSQLToDatabase(ctx, *r.object)
+}
+
 func (r *postgresqlResource) AuthSecret() apiv1.AuthSecretSpec {
 	return r.object.Spec.AuthSecret
 }
@@ -86,9 +90,6 @@ func newPostgreSQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *r
 			},
 			finalizerName: helpers.PostgreSQLFinalizerName,
 			databaseType:  domain.DatabaseTypePostgreSQL,
-			toDatabase: func(ctx context.Context, resource dedicatedDatabaseResource) (domain.Database, error) {
-				return adapters.PostgreSQLToDatabase(ctx, *resource.(*postgresqlResource).object)
-			},
 		},
 	}
 }

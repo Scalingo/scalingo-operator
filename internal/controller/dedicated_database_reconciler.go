@@ -23,28 +23,29 @@ import (
 type dedicatedDatabaseResource interface {
 	Object() client.Object
 	Meta() *metav1.ObjectMeta
+	ToDatabase(ctx context.Context) (domain.Database, error)
 	AuthSecret() apiv1.AuthSecretSpec
 	ConnInfoSecretTarget() apiv1.SecretTargetSpec
 	Networking() apiv1.NetworkingSpec
 	Region() string
 	DatabaseID() string
-	SetDatabaseID(string)
+	SetDatabaseID(id string)
 	Conditions() *[]metav1.Condition
 }
 
 type databaseSecretWriter interface {
-	SetSecret(context.Context, domain.Secret) error
+	SetSecret(ctx context.Context, secret domain.Secret) error
 }
 
 type dedicatedDatabaseConfig struct {
 	newResource   func() dedicatedDatabaseResource
 	finalizerName string
 	databaseType  domain.DatabaseType
-	toDatabase    func(context.Context, dedicatedDatabaseResource) (domain.Database, error)
 }
 
 type dedicatedDatabaseReconciler struct {
 	client.Client
+
 	Scheme *runtime.Scheme
 	config dedicatedDatabaseConfig
 }
@@ -93,7 +94,7 @@ func (r *dedicatedDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, errors.Wrap(ctx, err, "create database manager")
 	}
 
-	expectedDB, err := r.config.toDatabase(ctx, resource)
+	expectedDB, err := resource.ToDatabase(ctx)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(ctx, err, "bad custom resource format")
 	}
@@ -242,32 +243,9 @@ func (r *dedicatedDatabaseReconciler) deleteDatabase(
 	if databaseID == "" {
 		log.Info("Database provisioning requested but no database created yet, skip database deletion")
 	} else {
-		exists, err := dbManager.CheckDatabaseExists(ctx, databaseID)
+		err := r.deleteScalingoDatabase(ctx, resource, dbManager, databaseID)
 		if err != nil {
-			return errors.Wrapf(ctx, err, "check database %s exists", databaseID)
-		}
-		if !exists {
-			log.Info("Scalingo database not found, skip database deletion", "database", databaseID)
-		} else {
-			networkingSpec := resource.Networking()
-			if networkingSpec.IsOutscaleOKSNetPeeringEnabled() {
-				netPeeringReconciler := networking.NetPeeringReconciler{Client: r.Client, Scheme: r.Scheme}
-				err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, networking.DatabaseResource{
-					Name:       resource.Object().GetName(),
-					Namespace:  resource.Object().GetNamespace(),
-					Owner:      resource.Object(),
-					DatabaseID: databaseID,
-					Networking: networkingSpec,
-				})
-				if err != nil {
-					return errors.Wrap(ctx, err, "delete net peering resources")
-				}
-			}
-
-			err = dbManager.DeleteDatabase(ctx, databaseID)
-			if err != nil {
-				return errors.Wrapf(ctx, err, "delete database id %s", databaseID)
-			}
+			return err
 		}
 	}
 
@@ -275,6 +253,44 @@ func (r *dedicatedDatabaseReconciler) deleteDatabase(
 	err := r.Update(ctx, resource.Object())
 	if err != nil {
 		return errors.Wrap(ctx, err, "remove resource finalizer")
+	}
+	return nil
+}
+
+func (r *dedicatedDatabaseReconciler) deleteScalingoDatabase(
+	ctx context.Context,
+	resource dedicatedDatabaseResource,
+	dbManager databaseusecases.Manager,
+	databaseID string,
+) error {
+	log := logf.FromContext(ctx)
+	exists, err := dbManager.CheckDatabaseExists(ctx, databaseID)
+	if err != nil {
+		return errors.Wrap(ctx, err, "check database exists")
+	}
+	if !exists {
+		log.Info("Scalingo database not found, skip database deletion", "database", databaseID)
+		return nil
+	}
+
+	networkingSpec := resource.Networking()
+	if networkingSpec.IsOutscaleOKSNetPeeringEnabled() {
+		netPeeringReconciler := networking.NetPeeringReconciler{Client: r.Client, Scheme: r.Scheme}
+		err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, networking.DatabaseResource{
+			Name:       resource.Object().GetName(),
+			Namespace:  resource.Object().GetNamespace(),
+			Owner:      resource.Object(),
+			DatabaseID: databaseID,
+			Networking: networkingSpec,
+		})
+		if err != nil {
+			return errors.Wrap(ctx, err, "delete net peering resources")
+		}
+	}
+
+	err = dbManager.DeleteDatabase(ctx, databaseID)
+	if err != nil {
+		return errors.Wrap(ctx, err, "delete database")
 	}
 	return nil
 }
@@ -291,7 +307,7 @@ func (r *dedicatedDatabaseReconciler) createDatabase(
 	newDB, err := dbManager.CreateDatabase(ctx, expectedDB)
 	if err != nil {
 		log.Error(err, "Create database", "database", expectedDB)
-		return dedicatedDatabaseResult{}, errors.Wrapf(ctx, err, "create database %s", expectedDB.Name)
+		return dedicatedDatabaseResult{}, errors.Wrap(ctx, err, "create database")
 	}
 
 	resource.SetDatabaseID(newDB.ID)
@@ -311,7 +327,7 @@ func (r *dedicatedDatabaseReconciler) updateDatabase(
 	dbStatus, err := dbManager.UpdateDatabase(ctx, resource.DatabaseID(), expectedDB)
 	if err != nil {
 		log.Error(err, "Update database", "database", expectedDB)
-		return dedicatedDatabaseResult{}, errors.Wrapf(ctx, err, "update database %s", expectedDB.Name)
+		return dedicatedDatabaseResult{}, errors.Wrap(ctx, err, "update database")
 	}
 	if dbStatus != domain.DatabaseStatusProvisioning {
 		return dedicatedDatabaseResult{}, nil
@@ -338,13 +354,13 @@ func (r *dedicatedDatabaseReconciler) reconcileDatabaseProvisioning(
 		_, err := dbManager.UpdateDatabase(ctx, databaseID, expectedDB)
 		if err != nil {
 			log.Error(err, "Update database while provisioning", "database", databaseID)
-			return dedicatedDatabaseResult{}, errors.Wrapf(ctx, err, "update database %s while provisioning", expectedDB.Name)
+			return dedicatedDatabaseResult{}, errors.Wrap(ctx, err, "update database while provisioning")
 		}
 	}
 
 	currentDB, err := dbManager.GetDatabase(ctx, databaseID)
 	if err != nil {
-		return dedicatedDatabaseResult{}, errors.Wrapf(ctx, err, "get current database %s", databaseID)
+		return dedicatedDatabaseResult{}, errors.Wrap(ctx, err, "get current database")
 	}
 	if currentDB.Status != domain.DatabaseStatusRunning {
 		log.Info("Waiting for database being provisioned")
@@ -385,7 +401,7 @@ func (r *dedicatedDatabaseReconciler) writeConnectionSecrets(
 	log.Info("Write connection info secret", "secret", connectionSecret)
 	err = secretWriter.SetSecret(ctx, connectionSecret)
 	if err != nil {
-		return errors.Wrapf(ctx, err, "set secret %s", connectionSecret.Key)
+		return errors.Wrap(ctx, err, "set secret")
 	}
 
 	endpoints, err := dbManager.GetDatabaseEndpoints(ctx, currentDB.ID)
@@ -407,7 +423,7 @@ func (r *dedicatedDatabaseReconciler) writeConnectionSecrets(
 		log.Info("Write endpoint connection info secret", "secret", endpointSecret)
 		err = secretWriter.SetSecret(ctx, endpointSecret)
 		if err != nil {
-			return errors.Wrapf(ctx, err, "set secret %s", endpointSecret.Key)
+			return errors.Wrap(ctx, err, "set secret")
 		}
 	}
 	return nil

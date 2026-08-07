@@ -1,5 +1,5 @@
 /*
-Copyright 2025.
+Copyright 2026.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import (
 // MySQLReconciler reconciles a MySQL object.
 type MySQLReconciler struct {
 	client.Client
+
 	Scheme *runtime.Scheme
 }
 
@@ -46,6 +47,10 @@ func (r *mysqlResource) Object() client.Object {
 
 func (r *mysqlResource) Meta() *metav1.ObjectMeta {
 	return &r.object.ObjectMeta
+}
+
+func (r *mysqlResource) ToDatabase(ctx context.Context) (domain.Database, error) {
+	return adapters.MySQLToDatabase(ctx, *r.object)
 }
 
 func (r *mysqlResource) AuthSecret() apiv1.AuthSecretSpec {
@@ -86,9 +91,6 @@ func newMySQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtim
 			},
 			finalizerName: helpers.MySQLFinalizerName,
 			databaseType:  domain.DatabaseTypeMySQL,
-			toDatabase: func(ctx context.Context, resource dedicatedDatabaseResource) (domain.Database, error) {
-				return adapters.MySQLToDatabase(ctx, *resource.(*mysqlResource).object)
-			},
 		},
 	}
 }
