@@ -38,47 +38,47 @@ type MySQLReconciler struct {
 }
 
 type mysqlResource struct {
-	object *apiv1.MySQL
+	resource *apiv1.MySQL
 }
 
-func (r *mysqlResource) Object() client.Object {
-	return r.object
+func (r *mysqlResource) object() client.Object {
+	return r.resource
 }
 
-func (r *mysqlResource) Meta() *metav1.ObjectMeta {
-	return &r.object.ObjectMeta
+func (r *mysqlResource) meta() *metav1.ObjectMeta {
+	return &r.resource.ObjectMeta
 }
 
-func (r *mysqlResource) ToDatabase(ctx context.Context) (domain.Database, error) {
-	return adapters.MySQLToDatabase(ctx, *r.object)
+func (r *mysqlResource) toDatabase(ctx context.Context) (domain.Database, error) {
+	return adapters.MySQLToDatabase(ctx, *r.resource)
 }
 
-func (r *mysqlResource) AuthSecret() apiv1.AuthSecretSpec {
-	return r.object.Spec.AuthSecret
+func (r *mysqlResource) authSecret() apiv1.AuthSecretSpec {
+	return r.resource.Spec.AuthSecret
 }
 
-func (r *mysqlResource) ConnInfoSecretTarget() apiv1.SecretTargetSpec {
-	return r.object.Spec.ConnInfoSecretTarget
+func (r *mysqlResource) connInfoSecretTarget() apiv1.SecretTargetSpec {
+	return r.resource.Spec.ConnInfoSecretTarget
 }
 
-func (r *mysqlResource) Networking() apiv1.NetworkingSpec {
-	return r.object.Spec.Networking
+func (r *mysqlResource) networking() apiv1.NetworkingSpec {
+	return r.resource.Spec.Networking
 }
 
-func (r *mysqlResource) Region() string {
-	return r.object.Spec.Region
+func (r *mysqlResource) region() string {
+	return r.resource.Spec.Region
 }
 
-func (r *mysqlResource) DatabaseID() string {
-	return r.object.Status.ScalingoDatabaseID
+func (r *mysqlResource) databaseID() string {
+	return r.resource.Status.ScalingoDatabaseID
 }
 
-func (r *mysqlResource) SetDatabaseID(id string) {
-	r.object.Status.ScalingoDatabaseID = id
+func (r *mysqlResource) setDatabaseID(id string) {
+	r.resource.Status.ScalingoDatabaseID = id
 }
 
-func (r *mysqlResource) Conditions() *[]metav1.Condition {
-	return &r.object.Status.Conditions
+func (r *mysqlResource) conditions() *[]metav1.Condition {
+	return &r.resource.Status.Conditions
 }
 
 func newMySQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtime.Scheme) *dedicatedDatabaseReconciler {
@@ -87,7 +87,7 @@ func newMySQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtim
 		Scheme: scheme,
 		config: dedicatedDatabaseConfig{
 			newResource: func() dedicatedDatabaseResource {
-				return &mysqlResource{object: &apiv1.MySQL{}}
+				return &mysqlResource{resource: &apiv1.MySQL{}}
 			},
 			finalizerName: helpers.MySQLFinalizerName,
 			databaseType:  domain.DatabaseTypeMySQL,
@@ -96,7 +96,7 @@ func newMySQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtim
 }
 
 func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	return newMySQLDedicatedDatabaseReconciler(r.Client, r.Scheme).Reconcile(ctx, req)
+	return newMySQLDedicatedDatabaseReconciler(r.Client, r.Scheme).reconcile(ctx, req)
 }
 
 // +kubebuilder:rbac:groups=databases.scalingo.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete

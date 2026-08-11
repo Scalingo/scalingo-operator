@@ -37,47 +37,47 @@ type PostgreSQLReconciler struct {
 }
 
 type postgresqlResource struct {
-	object *apiv1.PostgreSQL
+	resource *apiv1.PostgreSQL
 }
 
-func (r *postgresqlResource) Object() client.Object {
-	return r.object
+func (r *postgresqlResource) object() client.Object {
+	return r.resource
 }
 
-func (r *postgresqlResource) Meta() *metav1.ObjectMeta {
-	return &r.object.ObjectMeta
+func (r *postgresqlResource) meta() *metav1.ObjectMeta {
+	return &r.resource.ObjectMeta
 }
 
-func (r *postgresqlResource) ToDatabase(ctx context.Context) (domain.Database, error) {
-	return adapters.PostgreSQLToDatabase(ctx, *r.object)
+func (r *postgresqlResource) toDatabase(ctx context.Context) (domain.Database, error) {
+	return adapters.PostgreSQLToDatabase(ctx, *r.resource)
 }
 
-func (r *postgresqlResource) AuthSecret() apiv1.AuthSecretSpec {
-	return r.object.Spec.AuthSecret
+func (r *postgresqlResource) authSecret() apiv1.AuthSecretSpec {
+	return r.resource.Spec.AuthSecret
 }
 
-func (r *postgresqlResource) ConnInfoSecretTarget() apiv1.SecretTargetSpec {
-	return r.object.Spec.ConnInfoSecretTarget
+func (r *postgresqlResource) connInfoSecretTarget() apiv1.SecretTargetSpec {
+	return r.resource.Spec.ConnInfoSecretTarget
 }
 
-func (r *postgresqlResource) Networking() apiv1.NetworkingSpec {
-	return r.object.Spec.Networking
+func (r *postgresqlResource) networking() apiv1.NetworkingSpec {
+	return r.resource.Spec.Networking
 }
 
-func (r *postgresqlResource) Region() string {
-	return r.object.Spec.Region
+func (r *postgresqlResource) region() string {
+	return r.resource.Spec.Region
 }
 
-func (r *postgresqlResource) DatabaseID() string {
-	return r.object.Status.ScalingoDatabaseID
+func (r *postgresqlResource) databaseID() string {
+	return r.resource.Status.ScalingoDatabaseID
 }
 
-func (r *postgresqlResource) SetDatabaseID(id string) {
-	r.object.Status.ScalingoDatabaseID = id
+func (r *postgresqlResource) setDatabaseID(id string) {
+	r.resource.Status.ScalingoDatabaseID = id
 }
 
-func (r *postgresqlResource) Conditions() *[]metav1.Condition {
-	return &r.object.Status.Conditions
+func (r *postgresqlResource) conditions() *[]metav1.Condition {
+	return &r.resource.Status.Conditions
 }
 
 func newPostgreSQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtime.Scheme) *dedicatedDatabaseReconciler {
@@ -86,7 +86,7 @@ func newPostgreSQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *r
 		Scheme: scheme,
 		config: dedicatedDatabaseConfig{
 			newResource: func() dedicatedDatabaseResource {
-				return &postgresqlResource{object: &apiv1.PostgreSQL{}}
+				return &postgresqlResource{resource: &apiv1.PostgreSQL{}}
 			},
 			finalizerName: helpers.PostgreSQLFinalizerName,
 			databaseType:  domain.DatabaseTypePostgreSQL,
@@ -95,7 +95,7 @@ func newPostgreSQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *r
 }
 
 func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	return newPostgreSQLDedicatedDatabaseReconciler(r.Client, r.Scheme).Reconcile(ctx, req)
+	return newPostgreSQLDedicatedDatabaseReconciler(r.Client, r.Scheme).reconcile(ctx, req)
 }
 
 // +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls,verbs=get;list;watch;create;update;patch;delete

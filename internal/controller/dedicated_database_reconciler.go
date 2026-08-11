@@ -21,16 +21,16 @@ import (
 )
 
 type dedicatedDatabaseResource interface {
-	Object() client.Object
-	Meta() *metav1.ObjectMeta
-	ToDatabase(ctx context.Context) (domain.Database, error)
-	AuthSecret() apiv1.AuthSecretSpec
-	ConnInfoSecretTarget() apiv1.SecretTargetSpec
-	Networking() apiv1.NetworkingSpec
-	Region() string
-	DatabaseID() string
-	SetDatabaseID(id string)
-	Conditions() *[]metav1.Condition
+	object() client.Object
+	meta() *metav1.ObjectMeta
+	toDatabase(ctx context.Context) (domain.Database, error)
+	authSecret() apiv1.AuthSecretSpec
+	connInfoSecretTarget() apiv1.SecretTargetSpec
+	networking() apiv1.NetworkingSpec
+	region() string
+	databaseID() string
+	setDatabaseID(id string)
+	conditions() *[]metav1.Condition
 }
 
 type databaseSecretWriter interface {
@@ -62,11 +62,11 @@ type dedicatedDatabaseResult struct {
 	requeueAfter time.Duration
 }
 
-func (r *dedicatedDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *dedicatedDatabaseReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 	resource := r.config.newResource()
 
-	err := r.Get(ctx, req.NamespacedName, resource.Object())
+	err := r.Get(ctx, req.NamespacedName, resource.object())
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -79,8 +79,8 @@ func (r *dedicatedDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{RequeueAfter: helpers.RequeueShortDelay}, nil
 	}
 
-	secretManager := helpers.NewSecretManager(r.Client, resource.Object())
-	authSecret := resource.AuthSecret()
+	secretManager := helpers.NewSecretManager(r.Client, resource.object())
+	authSecret := resource.authSecret()
 	authSecretRef := domain.Secret{Namespace: req.Namespace, Name: authSecret.Name, Key: authSecret.Key}
 	log.Info("Get auth secret", "secret", authSecretRef)
 
@@ -89,19 +89,19 @@ func (r *dedicatedDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, errors.Wrap(ctx, err, "get auth secret")
 	}
 
-	dbManager, err := databasebase.NewManager(ctx, r.config.databaseType, apiToken, resource.Region())
+	dbManager, err := databasebase.NewManager(ctx, r.config.databaseType, apiToken, resource.region())
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(ctx, err, "create database manager")
 	}
 
-	expectedDB, err := resource.ToDatabase(ctx)
+	expectedDB, err := resource.toDatabase(ctx)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(ctx, err, "bad custom resource format")
 	}
 
 	state := databaseState(resource)
 	log.Info("Current state",
-		"database", resource.DatabaseID(),
+		"database", resource.databaseID(),
 		"deletion_requested", state.deletionRequested,
 		"available", state.available,
 		"provisioning", state.provisioning,
@@ -113,16 +113,16 @@ func (r *dedicatedDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	state = databaseState(resource)
-	networkingSpec := resource.Networking()
+	networkingSpec := resource.networking()
 	netPeeringReconciler := networking.NetPeeringReconciler{Client: r.Client, Scheme: r.Scheme}
 	netPeeringRequeue, err := netPeeringReconciler.Reconcile(
 		ctx,
 		dbManager,
 		networking.DatabaseResource{
-			Name:       resource.Object().GetName(),
-			Namespace:  resource.Object().GetNamespace(),
-			Owner:      resource.Object(),
-			DatabaseID: resource.DatabaseID(),
+			Name:       resource.object().GetName(),
+			Namespace:  resource.object().GetNamespace(),
+			Owner:      resource.object(),
+			DatabaseID: resource.databaseID(),
 			Networking: networkingSpec,
 		},
 		networking.DatabaseState{
@@ -139,8 +139,8 @@ func (r *dedicatedDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if result.statusUpdate {
-		log.Info("Update resource status", "statusConditions", *resource.Conditions())
-		err = r.Status().Update(ctx, resource.Object())
+		log.Info("Update resource status", "statusConditions", *resource.conditions())
+		err = r.Status().Update(ctx, resource.object())
 		if err != nil {
 			return ctrl.Result{}, errors.Wrap(ctx, err, "update database resource status")
 		}
@@ -156,10 +156,19 @@ func (r *dedicatedDatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 func (r *dedicatedDatabaseReconciler) initializeResource(ctx context.Context, resource dedicatedDatabaseResource) (bool, error) {
 	log := logf.FromContext(ctx)
-	object := resource.Object()
-	meta := resource.Meta()
-	conditions := resource.Conditions()
+	object := resource.object()
+	meta := resource.meta()
+	conditions := resource.conditions()
 
+	// Initialization and resource updates.
+	// (no Scalingo client interaction)
+	//
+	// Initialize steps:
+	// 1/ add finalizer + requeue
+	// 2/ set initial Status.Condition + requeue
+	// 3/ set initial Annotations + requeue
+	//
+	// Note: the `requeue` prevents resource update conflicts.
 	switch {
 	case !controllerutil.ContainsFinalizer(object, r.config.finalizerName):
 		log.Info("Add finalizer to resource", "finalizer", r.config.finalizerName)
@@ -198,10 +207,10 @@ func (r *dedicatedDatabaseReconciler) initializeResource(ctx context.Context, re
 
 func databaseState(resource dedicatedDatabaseResource) dedicatedDatabaseState {
 	return dedicatedDatabaseState{
-		available:         helpers.IsDatabaseAvailable(*resource.Conditions()),
-		provisioning:      helpers.IsDatabaseProvisioning(*resource.Conditions()),
-		running:           helpers.IsDatabaseRunning(*resource.Meta()),
-		deletionRequested: helpers.IsDatabaseDeletionRequested(*resource.Meta()),
+		available:         helpers.IsDatabaseAvailable(*resource.conditions()),
+		provisioning:      helpers.IsDatabaseProvisioning(*resource.conditions()),
+		running:           helpers.IsDatabaseRunning(*resource.meta()),
+		deletionRequested: helpers.IsDatabaseDeletionRequested(*resource.meta()),
 	}
 }
 
@@ -214,7 +223,7 @@ func (r *dedicatedDatabaseReconciler) reconcileDatabase(
 	expectedDB domain.Database,
 	state dedicatedDatabaseState,
 ) (dedicatedDatabaseResult, error) {
-	databaseID := resource.DatabaseID()
+	databaseID := resource.databaseID()
 
 	switch {
 	case state.deletionRequested:
@@ -237,7 +246,7 @@ func (r *dedicatedDatabaseReconciler) deleteDatabase(
 	dbManager databaseusecases.Manager,
 ) error {
 	log := logf.FromContext(ctx)
-	databaseID := resource.DatabaseID()
+	databaseID := resource.databaseID()
 	log.Info("Delete database")
 
 	if databaseID == "" {
@@ -249,8 +258,8 @@ func (r *dedicatedDatabaseReconciler) deleteDatabase(
 		}
 	}
 
-	controllerutil.RemoveFinalizer(resource.Object(), r.config.finalizerName)
-	err := r.Update(ctx, resource.Object())
+	controllerutil.RemoveFinalizer(resource.object(), r.config.finalizerName)
+	err := r.Update(ctx, resource.object())
 	if err != nil {
 		return errors.Wrap(ctx, err, "remove resource finalizer")
 	}
@@ -273,13 +282,13 @@ func (r *dedicatedDatabaseReconciler) deleteScalingoDatabase(
 		return nil
 	}
 
-	networkingSpec := resource.Networking()
+	networkingSpec := resource.networking()
 	if networkingSpec.IsOutscaleOKSNetPeeringEnabled() {
 		netPeeringReconciler := networking.NetPeeringReconciler{Client: r.Client, Scheme: r.Scheme}
 		err = netPeeringReconciler.DeleteNetPeerings(ctx, dbManager, networking.DatabaseResource{
-			Name:       resource.Object().GetName(),
-			Namespace:  resource.Object().GetNamespace(),
-			Owner:      resource.Object(),
+			Name:       resource.object().GetName(),
+			Namespace:  resource.object().GetNamespace(),
+			Owner:      resource.object(),
 			DatabaseID: databaseID,
 			Networking: networkingSpec,
 		})
@@ -310,8 +319,8 @@ func (r *dedicatedDatabaseReconciler) createDatabase(
 		return dedicatedDatabaseResult{}, errors.Wrap(ctx, err, "create database")
 	}
 
-	resource.SetDatabaseID(newDB.ID)
-	helpers.SetDatabaseStatusProvisioning(resource.Conditions())
+	resource.setDatabaseID(newDB.ID)
+	helpers.SetDatabaseStatusProvisioning(resource.conditions())
 	return dedicatedDatabaseResult{statusUpdate: true, requeueAfter: helpers.RequeueLongDelay}, nil
 }
 
@@ -324,7 +333,7 @@ func (r *dedicatedDatabaseReconciler) updateDatabase(
 	log := logf.FromContext(ctx)
 	log.Info("Update database")
 
-	dbStatus, err := dbManager.UpdateDatabase(ctx, resource.DatabaseID(), expectedDB)
+	dbStatus, err := dbManager.UpdateDatabase(ctx, resource.databaseID(), expectedDB)
 	if err != nil {
 		log.Error(err, "Update database", "database", expectedDB)
 		return dedicatedDatabaseResult{}, errors.Wrap(ctx, err, "update database")
@@ -334,7 +343,7 @@ func (r *dedicatedDatabaseReconciler) updateDatabase(
 	}
 
 	log.Info("Waiting for database being provisioned")
-	helpers.SetDatabaseStatusProvisioning(resource.Conditions())
+	helpers.SetDatabaseStatusProvisioning(resource.conditions())
 	return dedicatedDatabaseResult{statusUpdate: true}, nil
 }
 
@@ -348,7 +357,7 @@ func (r *dedicatedDatabaseReconciler) reconcileDatabaseProvisioning(
 	available bool,
 ) (dedicatedDatabaseResult, error) {
 	log := logf.FromContext(ctx)
-	databaseID := resource.DatabaseID()
+	databaseID := resource.databaseID()
 
 	if available {
 		_, err := dbManager.UpdateDatabase(ctx, databaseID, expectedDB)
@@ -368,7 +377,7 @@ func (r *dedicatedDatabaseReconciler) reconcileDatabaseProvisioning(
 	}
 
 	log.Info("Database is provisioned")
-	helpers.SetDatabaseStatusProvisioned(resource.Conditions())
+	helpers.SetDatabaseStatusProvisioned(resource.conditions())
 	err = r.writeConnectionSecrets(ctx, namespace, resource, dbManager, secretWriter, currentDB)
 	if err != nil {
 		return dedicatedDatabaseResult{}, err
@@ -391,7 +400,7 @@ func (r *dedicatedDatabaseReconciler) writeConnectionSecrets(
 		return errors.Wrap(ctx, err, "get database url")
 	}
 
-	secretTarget := resource.ConnInfoSecretTarget()
+	secretTarget := resource.connInfoSecretTarget()
 	connectionSecret := domain.Secret{
 		Namespace: namespace,
 		Name:      secretTarget.Name,

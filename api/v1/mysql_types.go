@@ -60,6 +60,12 @@ type MySQLStatus struct {
 	// conditions represent the current state of the MySQL resource.
 	// Each condition has a unique type and reflects the status of a specific aspect of the resource.
 	//
+	// Standard condition types include:
+	// - "Available": the resource is fully functional
+	// - "Progressing": the resource is being created or updated
+	// - "Degraded": the resource failed to reach or maintain its desired state
+	//
+	// The status of each condition is one of True, False, or Unknown.
 	// +listType=map
 	// +listMapKey=type
 	// +optional
