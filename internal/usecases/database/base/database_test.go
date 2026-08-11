@@ -217,6 +217,23 @@ func TestManager_GetDatabaseURL(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, dbURL, res)
 	})
+
+	t.Run("it successfully gets MySQL database URL", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+		scClient := scalingomock.NewMockClient(ctrl)
+
+		manager := manager{scClient: scClient}
+		db := domain.Database{AppID: appID, Type: domain.DatabaseTypeMySQL}
+		dbURL := domain.DatabaseURL{Name: "SCALINGO_MYSQL_URL", Value: "mysql_connection_string"}
+
+		scClient.EXPECT().FindApplicationVariable(ctx, db.AppID, "SCALINGO_MYSQL_URL").Return(dbURL.Value, nil)
+
+		res, err := manager.GetDatabaseURL(ctx, db)
+
+		require.NoError(t, err)
+		require.Equal(t, dbURL, res)
+	})
 }
 
 func TestManager_UpdateDatabase(t *testing.T) {

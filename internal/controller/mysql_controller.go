@@ -1,5 +1,5 @@
 /*
-Copyright 2025.
+Copyright 2026.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,85 +30,86 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-// PostgreSQLReconciler reconciles a PostgreSQL object.
-type PostgreSQLReconciler struct {
+// MySQLReconciler reconciles a MySQL object.
+type MySQLReconciler struct {
 	client.Client
+
 	Scheme *runtime.Scheme
 }
 
-type postgresqlResource struct {
-	resource *apiv1.PostgreSQL
+type mysqlResource struct {
+	resource *apiv1.MySQL
 }
 
-func (r *postgresqlResource) object() client.Object {
+func (r *mysqlResource) object() client.Object {
 	return r.resource
 }
 
-func (r *postgresqlResource) meta() *metav1.ObjectMeta {
+func (r *mysqlResource) meta() *metav1.ObjectMeta {
 	return &r.resource.ObjectMeta
 }
 
-func (r *postgresqlResource) toDatabase(ctx context.Context) (domain.Database, error) {
-	return adapters.PostgreSQLToDatabase(ctx, *r.resource)
+func (r *mysqlResource) toDatabase(ctx context.Context) (domain.Database, error) {
+	return adapters.MySQLToDatabase(ctx, *r.resource)
 }
 
-func (r *postgresqlResource) authSecret() apiv1.AuthSecretSpec {
+func (r *mysqlResource) authSecret() apiv1.AuthSecretSpec {
 	return r.resource.Spec.AuthSecret
 }
 
-func (r *postgresqlResource) connInfoSecretTarget() apiv1.SecretTargetSpec {
+func (r *mysqlResource) connInfoSecretTarget() apiv1.SecretTargetSpec {
 	return r.resource.Spec.ConnInfoSecretTarget
 }
 
-func (r *postgresqlResource) networking() apiv1.NetworkingSpec {
+func (r *mysqlResource) networking() apiv1.NetworkingSpec {
 	return r.resource.Spec.Networking
 }
 
-func (r *postgresqlResource) region() string {
+func (r *mysqlResource) region() string {
 	return r.resource.Spec.Region
 }
 
-func (r *postgresqlResource) databaseID() string {
+func (r *mysqlResource) databaseID() string {
 	return r.resource.Status.ScalingoDatabaseID
 }
 
-func (r *postgresqlResource) setDatabaseID(id string) {
+func (r *mysqlResource) setDatabaseID(id string) {
 	r.resource.Status.ScalingoDatabaseID = id
 }
 
-func (r *postgresqlResource) conditions() *[]metav1.Condition {
+func (r *mysqlResource) conditions() *[]metav1.Condition {
 	return &r.resource.Status.Conditions
 }
 
-func newPostgreSQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtime.Scheme) *dedicatedDatabaseReconciler {
+func newMySQLDedicatedDatabaseReconciler(k8sClient client.Client, scheme *runtime.Scheme) *dedicatedDatabaseReconciler {
 	return &dedicatedDatabaseReconciler{
 		Client: k8sClient,
 		Scheme: scheme,
 		config: dedicatedDatabaseConfig{
 			newResource: func() dedicatedDatabaseResource {
-				return &postgresqlResource{resource: &apiv1.PostgreSQL{}}
+				return &mysqlResource{resource: &apiv1.MySQL{}}
 			},
-			finalizerName: helpers.PostgreSQLFinalizerName,
-			databaseType:  domain.DatabaseTypePostgreSQL,
+			finalizerName: helpers.MySQLFinalizerName,
+			databaseType:  domain.DatabaseTypeMySQL,
 		},
 	}
 }
 
-func (r *PostgreSQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	return newPostgreSQLDedicatedDatabaseReconciler(r.Client, r.Scheme).reconcile(ctx, req)
+func (r *MySQLReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	return newMySQLDedicatedDatabaseReconciler(r.Client, r.Scheme).reconcile(ctx, req)
 }
 
-// +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=databases.scalingo.com,resources=postgresqls/finalizers,verbs=update
+// +kubebuilder:rbac:groups=databases.scalingo.com,resources=mysqls,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=databases.scalingo.com,resources=mysqls/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=databases.scalingo.com,resources=mysqls/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=oks.dev,resources=netpeeringrequests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=oks.dev,resources=netpeerings,verbs=get;list;delete
 
 // SetupWithManager sets up the controller.
-func (r *PostgreSQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *MySQLReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&apiv1.PostgreSQL{}).
-		Named("postgresql").
+		For(&apiv1.MySQL{}).
+		Named("mysql").
 		Complete(r)
 }

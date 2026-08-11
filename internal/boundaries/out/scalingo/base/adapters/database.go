@@ -9,12 +9,17 @@ import (
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 )
 
-const postgresqlAddonProviderID = "postgresql-ng"
+const (
+	postgresqlAddonProviderID = "postgresql-ng"
+	mysqlAddonProviderID      = "mysql-dr"
+)
 
 func ToScalingoProviderID(dbType domain.DatabaseType) (string, error) {
 	switch dbType {
 	case domain.DatabaseTypePostgreSQL:
 		return postgresqlAddonProviderID, nil
+	case domain.DatabaseTypeMySQL:
+		return mysqlAddonProviderID, nil
 	default:
 		return "", fmt.Errorf("no matching provider for %q", dbType)
 	}

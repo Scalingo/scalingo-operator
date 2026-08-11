@@ -41,6 +41,10 @@ func (r NetPeeringReconciler) Reconcile(ctx context.Context, dbManager databaseu
 
 	log := logf.FromContext(ctx)
 	if !resource.Networking.IsOutscaleOKSNetPeeringEnabled() {
+		if state.Provisioning || resource.DatabaseID == "" {
+			return 0, nil
+		}
+
 		err := r.DeleteNetPeerings(ctx, dbManager, resource)
 		if err != nil {
 			return 0, errors.Wrap(ctx, err, "delete net peering resources")

@@ -112,6 +112,10 @@ func TestToDatabaseTypeName(t *testing.T) {
 			dbType:     domain.DatabaseTypePostgreSQL,
 			dbTypeName: "POSTGRESQL",
 		},
+		"it successfully extract MySQL type name": {
+			dbType:     domain.DatabaseTypeMySQL,
+			dbTypeName: "MYSQL",
+		},
 	}
 
 	for name, test := range tests {

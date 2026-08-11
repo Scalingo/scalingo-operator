@@ -2,6 +2,8 @@
 
 ## To Be Released
 
+* feat(mysql): Support MySQL dedicated resources
+
 ## v1.3.1
 
 * feat(db/deletion) Support database resource deletion when the resource was deleted first through Scalingo API
