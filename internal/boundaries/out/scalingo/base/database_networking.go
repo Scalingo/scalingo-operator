@@ -9,7 +9,9 @@ import (
 )
 
 func (c *client) ListDatabaseEndpoints(ctx context.Context, dbID string) ([]domain.DatabaseEndpoint, error) {
-	endpoints, err := c.scClient.Preview().DatabaseEndpointsList(ctx, dbID)
+	endpoints, err := c.scClient.Preview().DatabaseEndpointsList(ctx, dbID, scalingoapi.DatabaseEndpointsListParams{
+		IncludeDefaultCredentials: false,
+	})
 	if err != nil {
 		return nil, errors.Wrap(ctx, err, "list database endpoints")
 	}

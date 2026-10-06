@@ -2,6 +2,35 @@
 
 ## To Be Released
 
+## 11.7.0
+
+* feat(tokens): add `TokenDelete` method
+
+## 11.6.0
+
+* feat(preview/database-endpoints/credentials) Allow asking for default credentials to the API when listing endpoints
+
+## 11.5.0
+
+* feat(firewall rules) Add application firewall rules
+
+## 11.4.0
+
+* feat: add `MissedDatabaseMaintenance` event
+
+## 11.3.0
+
+* feat(databases): Add new method to get recovery window for PITR
+
+## 11.2.0
+
+* fix(databases): Fix PITR restore return
+* feat(databases): Add new method to restore PITR
+
+## 11.1.1
+
+* feat(events): add database continuous backup events
+
 ## 11.1.0
 
 * feat: list database endpoints
