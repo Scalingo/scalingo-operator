@@ -2,6 +2,7 @@
 
 ## To Be Released
 
+* chore(go): Update Go to 1.27.3
 * feat(mysql): Support MySQL dedicated resources
 
 ## v1.3.1
