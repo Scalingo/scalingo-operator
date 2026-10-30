@@ -1,6 +1,6 @@
 module github.com/Scalingo/scalingo-operator
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/Scalingo/go-scalingo/v11 v11.7.0
