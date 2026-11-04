@@ -23,13 +23,17 @@ func TestToScalingoProviderID(t *testing.T) {
 			dbType:          domain.DatabaseType("unknown"),
 			isExpectedError: true,
 		},
-		"it successfully extract PostgreSQL Scalingo addon provider ID": {
+		"it successfully extracts PostgreSQL Scalingo addon provider ID": {
 			dbType:             domain.DatabaseTypePostgreSQL,
 			scalingoProviderId: postgresqlAddonProviderID,
 		},
-		"it successfully extract MySQL Scalingo addon provider ID": {
+		"it successfully extracts MySQL Scalingo addon provider ID": {
 			dbType:             domain.DatabaseTypeMySQL,
 			scalingoProviderId: mysqlAddonProviderID,
+		},
+		"it successfully extracts OpenSearch Scalingo addon provider ID": {
+			dbType:             domain.DatabaseTypeOpenSearch,
+			scalingoProviderId: opensearchAddonProviderID,
 		},
 	}
 
@@ -170,5 +174,20 @@ func TestToDatabase(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, domain.DatabaseTypeMySQL, res.Type)
+	})
+
+	t.Run("it converts OpenSearch to database", func(t *testing.T) {
+		db := scalingoapi.DatabaseNG{
+			Database: scalingoapi.Database{
+				ID:       "opensearch-db-id",
+				TypeName: "opensearch",
+				Status:   scalingoapi.DatabaseStatusRunning,
+			},
+		}
+
+		res, err := ToDatabase(t.Context(), db)
+
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseTypeOpenSearch, res.Type)
 	})
 }
