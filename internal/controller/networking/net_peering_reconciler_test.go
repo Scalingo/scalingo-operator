@@ -6,14 +6,17 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/Scalingo/go-utils/errors/v3"
 
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
+	"github.com/Scalingo/scalingo-operator/internal/controller/networking/k8sclientmock"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 	"github.com/Scalingo/scalingo-operator/internal/usecases/database/databasemock"
 )
@@ -134,6 +137,64 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 		require.NoError(t, err)
 		require.Zero(t, requeue)
 	})
+
+	t.Run("skips disabled net peering cleanup when the NetPeering CRD is not installed", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+
+		k8sClient := k8sclientmock.NewMockClient(ctrl)
+		databaseManager := databasemock.NewMockManager(ctrl)
+
+		reconciler := NetPeeringReconciler{
+			Client: k8sClient,
+		}
+		resource := DatabaseResource{
+			Name:       "db-resource",
+			Namespace:  "default",
+			DatabaseID: "db-123",
+		}
+
+		k8sClient.EXPECT().List(ctx, gomock.Any(), gomock.Any()).Return(netPeeringCRDNotInstalledError())
+
+		requeue, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
+
+		require.NoError(t, err)
+		require.Zero(t, requeue)
+	})
+
+	t.Run("returns an error for enabled net peering when the NetPeering CRD is not installed", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+
+		k8sClient := k8sclientmock.NewMockClient(ctrl)
+		databaseManager := databasemock.NewMockManager(ctrl)
+
+		reconciler := NetPeeringReconciler{
+			Client: k8sClient,
+		}
+		resource := DatabaseResource{
+			Name:       "db-resource",
+			Namespace:  "default",
+			DatabaseID: "db-123",
+			Networking: netPeeringEnabledNetworkingSpec(),
+		}
+
+		k8sClient.EXPECT().List(ctx, gomock.Any(), gomock.Any()).Return(netPeeringCRDNotInstalledError())
+
+		_, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
+
+		require.Error(t, err)
+		require.True(t, meta.IsNoMatchError(err))
+	})
+}
+
+// netPeeringCRDNotInstalledError is the error returned by the Kubernetes client
+// when listing NetPeering objects on a cluster without the Outscale OKS CRDs.
+func netPeeringCRDNotInstalledError() error {
+	return &meta.NoKindMatchError{
+		GroupKind:        schema.GroupKind{Group: "oks.dev", Kind: "NetPeering"},
+		SearchedVersions: []string{"v1beta"},
+	}
 }
 
 func TestDeleteOKSNetPeerings(t *testing.T) {

@@ -4,4 +4,5 @@ const (
 	// Databases finalizer names.
 	PostgreSQLFinalizerName = "databases.scalingo.com/PostgresFinalizer"
 	MySQLFinalizerName      = "databases.scalingo.com/MySQLFinalizer"
+	OpenSearchFinalizerName = "databases.scalingo.com/OpenSearchFinalizer"
 )

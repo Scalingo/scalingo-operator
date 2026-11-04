@@ -2,8 +2,10 @@
 
 ## To Be Released
 
+* fix(net-peering): Skip net peering cleanup when the Outscale NetPeering CRD is not installed
 * chore(go): Update Go to 1.27.3
 * feat(mysql): Support MySQL dedicated resources
+* feat(opensearch): Support OpenSearch dedicated resources
 
 ## v1.3.1
 
