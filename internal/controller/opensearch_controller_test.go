@@ -47,10 +47,8 @@ var _ = Describe("OpenSearch Controller", func() {
 			err := k8sClient.Get(ctx, typeNamespacedName, opensearch)
 			if err != nil && errors.IsNotFound(err) {
 				resource := &databasesv1.OpenSearch{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: resourceNamespace,
-					},
+					Name:      resourceName,
+					Namespace: resourceNamespace,
 					Spec: databasesv1.OpenSearchSpec{
 						AuthSecret: databasesv1.AuthSecretSpec{
 							Name: "scalingo-auth-secret",

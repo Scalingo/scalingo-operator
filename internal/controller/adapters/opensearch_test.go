@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
@@ -46,7 +45,7 @@ func TestOpenSearchToDatabase(t *testing.T) {
 
 	t.Run("it falls back on resource name for missing database name", func(t *testing.T) {
 		opensearch := apiv1.OpenSearch{
-			ObjectMeta: metav1.ObjectMeta{Name: resourceName},
+			Name: resourceName,
 			Spec: apiv1.OpenSearchSpec{
 				Plan:      dbPlan,
 				ProjectID: projectID,
