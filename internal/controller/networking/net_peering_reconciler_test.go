@@ -16,6 +16,7 @@ import (
 
 	apiv1 "github.com/Scalingo/scalingo-operator/api/v1"
 	"github.com/Scalingo/scalingo-operator/internal/controller/helpers"
+	"github.com/Scalingo/scalingo-operator/internal/controller/networking/k8sclientmock"
 	"github.com/Scalingo/scalingo-operator/internal/domain"
 	"github.com/Scalingo/scalingo-operator/internal/usecases/database/databasemock"
 )
@@ -141,17 +142,19 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 		ctx := t.Context()
 		ctrl := gomock.NewController(t)
 
-		clientStub := &netPeeringResourceClient{listErr: newNoKindMatchError()}
+		k8sClient := k8sclientmock.NewMockClient(ctrl)
 		databaseManager := databasemock.NewMockManager(ctrl)
 
 		reconciler := NetPeeringReconciler{
-			Client: clientStub,
+			Client: k8sClient,
 		}
 		resource := DatabaseResource{
 			Name:       "db-resource",
 			Namespace:  "default",
 			DatabaseID: "db-123",
 		}
+
+		k8sClient.EXPECT().List(ctx, gomock.Any(), gomock.Any()).Return(netPeeringCRDNotInstalledError())
 
 		requeue, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
 
@@ -163,11 +166,11 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 		ctx := t.Context()
 		ctrl := gomock.NewController(t)
 
-		clientStub := &netPeeringResourceClient{listErr: newNoKindMatchError()}
+		k8sClient := k8sclientmock.NewMockClient(ctrl)
 		databaseManager := databasemock.NewMockManager(ctrl)
 
 		reconciler := NetPeeringReconciler{
-			Client: clientStub,
+			Client: k8sClient,
 		}
 		resource := DatabaseResource{
 			Name:       "db-resource",
@@ -176,6 +179,8 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 			Networking: netPeeringEnabledNetworkingSpec(),
 		}
 
+		k8sClient.EXPECT().List(ctx, gomock.Any(), gomock.Any()).Return(netPeeringCRDNotInstalledError())
+
 		_, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
 
 		require.Error(t, err)
@@ -183,7 +188,9 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 	})
 }
 
-func newNoKindMatchError() error {
+// netPeeringCRDNotInstalledError is the error returned by the Kubernetes client
+// when listing NetPeering objects on a cluster without the Outscale OKS CRDs.
+func netPeeringCRDNotInstalledError() error {
 	return &meta.NoKindMatchError{
 		GroupKind:        schema.GroupKind{Group: "oks.dev", Kind: "NetPeering"},
 		SearchedVersions: []string{"v1beta"},
@@ -233,15 +240,10 @@ func TestDeleteOKSNetPeerings(t *testing.T) {
 type netPeeringResourceClient struct {
 	client.Client
 
-	items   []*unstructured.Unstructured
-	listErr error
+	items []*unstructured.Unstructured
 }
 
 func (c *netPeeringResourceClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
-	if c.listErr != nil {
-		return c.listErr
-	}
-
 	listOptions := &client.ListOptions{}
 	for _, opt := range opts {
 		opt.ApplyToList(listOptions)
