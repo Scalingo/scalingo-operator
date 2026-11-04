@@ -6,8 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/Scalingo/go-utils/errors/v3"
@@ -134,6 +136,58 @@ func TestReconcileOKSNetPeering(t *testing.T) {
 		require.NoError(t, err)
 		require.Zero(t, requeue)
 	})
+
+	t.Run("skips disabled net peering cleanup when the NetPeering CRD is not installed", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+
+		clientStub := &netPeeringResourceClient{listErr: newNoKindMatchError()}
+		databaseManager := databasemock.NewMockManager(ctrl)
+
+		reconciler := NetPeeringReconciler{
+			Client: clientStub,
+		}
+		resource := DatabaseResource{
+			Name:       "db-resource",
+			Namespace:  "default",
+			DatabaseID: "db-123",
+		}
+
+		requeue, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
+
+		require.NoError(t, err)
+		require.Zero(t, requeue)
+	})
+
+	t.Run("returns an error for enabled net peering when the NetPeering CRD is not installed", func(t *testing.T) {
+		ctx := t.Context()
+		ctrl := gomock.NewController(t)
+
+		clientStub := &netPeeringResourceClient{listErr: newNoKindMatchError()}
+		databaseManager := databasemock.NewMockManager(ctrl)
+
+		reconciler := NetPeeringReconciler{
+			Client: clientStub,
+		}
+		resource := DatabaseResource{
+			Name:       "db-resource",
+			Namespace:  "default",
+			DatabaseID: "db-123",
+			Networking: netPeeringEnabledNetworkingSpec(),
+		}
+
+		_, err := reconciler.Reconcile(ctx, databaseManager, resource, DatabaseState{Available: true})
+
+		require.Error(t, err)
+		require.True(t, meta.IsNoMatchError(err))
+	})
+}
+
+func newNoKindMatchError() error {
+	return &meta.NoKindMatchError{
+		GroupKind:        schema.GroupKind{Group: "oks.dev", Kind: "NetPeering"},
+		SearchedVersions: []string{"v1beta"},
+	}
 }
 
 func TestDeleteOKSNetPeerings(t *testing.T) {
@@ -179,10 +233,15 @@ func TestDeleteOKSNetPeerings(t *testing.T) {
 type netPeeringResourceClient struct {
 	client.Client
 
-	items []*unstructured.Unstructured
+	items   []*unstructured.Unstructured
+	listErr error
 }
 
 func (c *netPeeringResourceClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	if c.listErr != nil {
+		return c.listErr
+	}
+
 	listOptions := &client.ListOptions{}
 	for _, opt := range opts {
 		opt.ApplyToList(listOptions)
