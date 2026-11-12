@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -81,6 +82,11 @@ func (r NetPeeringReconciler) DeleteNetPeerings(ctx context.Context, dbManager d
 	}
 
 	netPeerings, err := r.listExistingNetPeeringsForDatabase(ctx, dbManager, resource)
+	if meta.IsNoMatchError(err) {
+		// The Outscale NetPeering CRD only exists on OKS clusters: elsewhere there is nothing to clean up.
+		log.Info("Outscale NetPeering CRD not installed, skip net peering cleanup")
+		return nil
+	}
 	if err != nil {
 		return errors.Wrap(ctx, err, "list existing net peerings for database")
 	}
