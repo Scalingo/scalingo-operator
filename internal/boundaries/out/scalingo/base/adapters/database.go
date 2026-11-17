@@ -12,6 +12,7 @@ import (
 const (
 	postgresqlAddonProviderID = "postgresql-ng"
 	mysqlAddonProviderID      = "mysql-dr"
+	opensearchAddonProviderID = "opensearch-dr"
 )
 
 func ToScalingoProviderID(dbType domain.DatabaseType) (string, error) {
@@ -20,6 +21,8 @@ func ToScalingoProviderID(dbType domain.DatabaseType) (string, error) {
 		return postgresqlAddonProviderID, nil
 	case domain.DatabaseTypeMySQL:
 		return mysqlAddonProviderID, nil
+	case domain.DatabaseTypeOpenSearch:
+		return opensearchAddonProviderID, nil
 	default:
 		return "", fmt.Errorf("no matching provider for %q", dbType)
 	}

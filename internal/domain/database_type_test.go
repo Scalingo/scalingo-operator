@@ -10,6 +10,7 @@ func TestDatabaseType_Validate(t *testing.T) {
 	t.Run("it successfully validates type", func(t *testing.T) {
 		require.NoError(t, DatabaseTypePostgreSQL.Validate())
 		require.NoError(t, DatabaseTypeMySQL.Validate())
+		require.NoError(t, DatabaseTypeOpenSearch.Validate())
 	})
 
 	t.Run("it returns error", func(t *testing.T) {

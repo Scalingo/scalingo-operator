@@ -2,4 +2,5 @@
 resources:
 - databases_v1_postgresql.yaml
 - databases_v1_mysql.yaml
+- databases_v1_opensearch.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

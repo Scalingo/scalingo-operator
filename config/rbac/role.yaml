@@ -20,6 +20,7 @@ rules:
   - databases.scalingo.com
   resources:
   - mysqls
+  - opensearches
   - postgresqls
   verbs:
   - create
@@ -33,6 +34,7 @@ rules:
   - databases.scalingo.com
   resources:
   - mysqls/finalizers
+  - opensearches/finalizers
   - postgresqls/finalizers
   verbs:
   - update
@@ -40,6 +42,7 @@ rules:
   - databases.scalingo.com
   resources:
   - mysqls/status
+  - opensearches/status
   - postgresqls/status
   verbs:
   - get

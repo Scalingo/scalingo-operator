@@ -1,6 +1,6 @@
 # Scalingo Operator v1.4.0
 
-The Scalingo Operator can deploy and undeploy PostgreSQL and MySQL instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
+The Scalingo Operator can deploy and undeploy PostgreSQL, MySQL and OpenSearch instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
 # Definitions
 
@@ -14,6 +14,7 @@ It tells the API server: “Here is a new kind (e.g., MyApp) and its schema.”
 Examples:
 * `config/crd/bases/databases.scalingo.com_postgresqls.yaml`
 * `config/crd/bases/databases.scalingo.com_mysqls.yaml`
+* `config/crd/bases/databases.scalingo.com_opensearches.yaml`
 
 ## CR (Custom Resource)
 
@@ -22,8 +23,10 @@ A CR is an actual instance of the type defined by the CRD.
 Examples:
 * `config/samples/databases_v1_postgresql.yaml`
 * `config/samples/databases_v1_mysql.yaml`
+* `config/samples/databases_v1_opensearch.yaml`
 * `doc/examples/custom_resources/cr-postgresql.starter.yaml`
 * `doc/examples/custom_resources/cr-postgresql.enterprise.yaml`
+* `doc/examples/custom_resources/cr-opensearch.starter.yaml`
 
 # Usage
 
@@ -74,6 +77,11 @@ kubectl apply --filename config/samples/databases_v1_postgresql.yaml
 Using the MySQL sample:
 ```sh
 kubectl apply --filename config/samples/databases_v1_mysql.yaml
+```
+
+Using the OpenSearch sample:
+```sh
+kubectl apply --filename config/samples/databases_v1_opensearch.yaml
 ```
 
 ### Read Database URL
@@ -139,7 +147,7 @@ Using the PostgreSQL sample:
 kubectl delete --filename config/samples/databases_v1_postgresql.yaml
 ```
 
-For MySQL, replace the filename with `config/samples/databases_v1_mysql.yaml`.
+For MySQL or OpenSearch, use `config/samples/databases_v1_mysql.yaml` or `config/samples/databases_v1_opensearch.yaml` instead.
 
 ## Undeploy the Operator
 
@@ -217,6 +225,7 @@ These commands were executed to create this operator:
 kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-operator
 kubebuilder create api --group databases --version v1 --kind PostgreSQL
 kubebuilder create api --group databases --version v1 --kind MySQL
+kubebuilder create api --group databases --version v1 --kind OpenSearch
 make manifests
 make install
 ```

@@ -74,6 +74,8 @@ func toDatabaseTypeName(ctx context.Context, dbType domain.DatabaseType) (string
 		return "POSTGRESQL", nil
 	case domain.DatabaseTypeMySQL:
 		return "MYSQL", nil
+	case domain.DatabaseTypeOpenSearch:
+		return "OPENSEARCH", nil
 	default:
 		return "", errors.Newf(ctx, "no matching type for %q", dbType)
 	}

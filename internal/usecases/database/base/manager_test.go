@@ -108,13 +108,17 @@ func TestToDatabaseTypeName(t *testing.T) {
 			dbType:          domain.DatabaseType("unknown"),
 			isExpectedError: true,
 		},
-		"it successfully extract PostgreSQL type name": {
+		"it successfully extracts PostgreSQL type name": {
 			dbType:     domain.DatabaseTypePostgreSQL,
 			dbTypeName: "POSTGRESQL",
 		},
-		"it successfully extract MySQL type name": {
+		"it successfully extracts MySQL type name": {
 			dbType:     domain.DatabaseTypeMySQL,
 			dbTypeName: "MYSQL",
+		},
+		"it successfully extracts OpenSearch type name": {
+			dbType:     domain.DatabaseTypeOpenSearch,
+			dbTypeName: "OPENSEARCH",
 		},
 	}
 
