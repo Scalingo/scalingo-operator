@@ -11,6 +11,7 @@ func TestDatabaseType_Validate(t *testing.T) {
 		require.NoError(t, DatabaseTypePostgreSQL.Validate())
 		require.NoError(t, DatabaseTypeMySQL.Validate())
 		require.NoError(t, DatabaseTypeOpenSearch.Validate())
+		require.NoError(t, DatabaseTypeValkey.Validate())
 	})
 
 	t.Run("it returns error", func(t *testing.T) {
