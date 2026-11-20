@@ -31,4 +31,7 @@ resources:
 - postgresql_admin_role.yaml
 - postgresql_editor_role.yaml
 - postgresql_viewer_role.yaml
+- valkey_admin_role.yaml
+- valkey_editor_role.yaml
+- valkey_viewer_role.yaml
 

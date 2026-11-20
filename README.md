@@ -1,6 +1,6 @@
 # Scalingo Operator v1.4.0
 
-The Scalingo Operator can deploy and undeploy PostgreSQL, MySQL and OpenSearch instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
+The Scalingo Operator can deploy and undeploy PostgreSQL, MySQL, OpenSearch and Valkey instances hosted on dedicated resources on [Scalingo platform](https://scalingo.com/) from a [Kubernetes](https://kubernetes.io/) cluster.
 
 # Definitions
 
@@ -15,6 +15,7 @@ Examples:
 * `config/crd/bases/databases.scalingo.com_postgresqls.yaml`
 * `config/crd/bases/databases.scalingo.com_mysqls.yaml`
 * `config/crd/bases/databases.scalingo.com_opensearches.yaml`
+* `config/crd/bases/databases.scalingo.com_valkeys.yaml`
 
 ## CR (Custom Resource)
 
@@ -24,9 +25,11 @@ Examples:
 * `config/samples/databases_v1_postgresql.yaml`
 * `config/samples/databases_v1_mysql.yaml`
 * `config/samples/databases_v1_opensearch.yaml`
+* `config/samples/databases_v1_valkey.yaml`
 * `doc/examples/custom_resources/cr-postgresql.starter.yaml`
 * `doc/examples/custom_resources/cr-postgresql.enterprise.yaml`
 * `doc/examples/custom_resources/cr-opensearch.starter.yaml`
+* `doc/examples/custom_resources/cr-valkey.starter.yaml`
 
 # Usage
 
@@ -82,6 +85,11 @@ kubectl apply --filename config/samples/databases_v1_mysql.yaml
 Using the OpenSearch sample:
 ```sh
 kubectl apply --filename config/samples/databases_v1_opensearch.yaml
+```
+
+Using the Valkey sample:
+```sh
+kubectl apply --filename config/samples/databases_v1_valkey.yaml
 ```
 
 ### Read Database URL
@@ -147,7 +155,7 @@ Using the PostgreSQL sample:
 kubectl delete --filename config/samples/databases_v1_postgresql.yaml
 ```
 
-For MySQL or OpenSearch, use `config/samples/databases_v1_mysql.yaml` or `config/samples/databases_v1_opensearch.yaml` instead.
+For MySQL, OpenSearch or Valkey, use `config/samples/databases_v1_mysql.yaml`, `config/samples/databases_v1_opensearch.yaml` or `config/samples/databases_v1_valkey.yaml` instead.
 
 ## Undeploy the Operator
 
@@ -226,6 +234,7 @@ kubebuilder init --domain scalingo.com --repo github.com/Scalingo/scalingo-opera
 kubebuilder create api --group databases --version v1 --kind PostgreSQL
 kubebuilder create api --group databases --version v1 --kind MySQL
 kubebuilder create api --group databases --version v1 --kind OpenSearch
+kubebuilder create api --group databases --version v1 --kind Valkey
 make manifests
 make install
 ```

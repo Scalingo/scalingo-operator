@@ -120,6 +120,10 @@ func TestToDatabaseTypeName(t *testing.T) {
 			dbType:     domain.DatabaseTypeOpenSearch,
 			dbTypeName: "OPENSEARCH",
 		},
+		"it successfully extracts Valkey type name": {
+			dbType:     domain.DatabaseTypeValkey,
+			dbTypeName: "VALKEY",
+		},
 	}
 
 	for name, test := range tests {

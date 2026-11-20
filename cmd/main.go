@@ -203,6 +203,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenSearch")
 		os.Exit(1)
 	}
+	err = (&controller.ValkeyReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Valkey")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

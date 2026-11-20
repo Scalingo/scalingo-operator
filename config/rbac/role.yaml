@@ -22,6 +22,7 @@ rules:
   - mysqls
   - opensearches
   - postgresqls
+  - valkeys
   verbs:
   - create
   - delete
@@ -36,6 +37,7 @@ rules:
   - mysqls/finalizers
   - opensearches/finalizers
   - postgresqls/finalizers
+  - valkeys/finalizers
   verbs:
   - update
 - apiGroups:
@@ -44,6 +46,7 @@ rules:
   - mysqls/status
   - opensearches/status
   - postgresqls/status
+  - valkeys/status
   verbs:
   - get
   - patch

@@ -35,6 +35,10 @@ func TestToScalingoProviderID(t *testing.T) {
 			dbType:             domain.DatabaseTypeOpenSearch,
 			scalingoProviderId: opensearchAddonProviderID,
 		},
+		"it successfully extracts Valkey Scalingo addon provider ID": {
+			dbType:             domain.DatabaseTypeValkey,
+			scalingoProviderId: valkeyAddonProviderID,
+		},
 	}
 
 	for name, test := range tests {
@@ -189,5 +193,20 @@ func TestToDatabase(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, domain.DatabaseTypeOpenSearch, res.Type)
+	})
+
+	t.Run("it converts Valkey to database", func(t *testing.T) {
+		db := scalingoapi.DatabaseNG{
+			Database: scalingoapi.Database{
+				ID:       "valkey-db-id",
+				TypeName: "valkey",
+				Status:   scalingoapi.DatabaseStatusRunning,
+			},
+		}
+
+		res, err := ToDatabase(t.Context(), db)
+
+		require.NoError(t, err)
+		require.Equal(t, domain.DatabaseTypeValkey, res.Type)
 	})
 }

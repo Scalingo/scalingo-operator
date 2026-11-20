@@ -76,6 +76,8 @@ func toDatabaseTypeName(ctx context.Context, dbType domain.DatabaseType) (string
 		return "MYSQL", nil
 	case domain.DatabaseTypeOpenSearch:
 		return "OPENSEARCH", nil
+	case domain.DatabaseTypeValkey:
+		return "VALKEY", nil
 	default:
 		return "", errors.Newf(ctx, "no matching type for %q", dbType)
 	}
